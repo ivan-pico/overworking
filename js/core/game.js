@@ -6,10 +6,9 @@
 
   var DECOR = { wall: 1, plant: 1, server_rack: 1 };
   var SURFACE = { counter: 1, desk: 1, testbench: 1, conveyor: 1 };
-  var COMPILE_TIME = 4, WARN_AFTER = 5, BURN_AFTER = 3;
-  var DESK_TIME = 2.5, TEST_TIME = 1.5, REVIEW_TIME = 2, COFFEE_TIME = 1;
-  var RETURN_DELAY = 6, EXPIRE_PENALTY = 30, MAX_BUGS = 3;
-  var CONVEYOR_TIME = 1.1;
+  /* Tiempos, multas, fuego, bugs, apagones...: todo en js/core/tuning.js. Se lee en cada uso
+   * (no se copia), así los cambios del panel de ajustes (F9) se notan al instante. */
+  var TU = OW.TUNING, PL = TU.pipeline;
 
   function item(kind, lane) { return { kind: kind, lane: lane || null, contents: [], prog: 0 }; }
   OW.makeItem = item;
@@ -25,6 +24,7 @@
 
   function Game(levelIndex, numPlayers) {
     this.li = levelIndex;
+    if (OW.syncLevels) OW.syncLevels();
     this.level = OW.applyDifficulty(OW.LEVELS[levelIndex]);
     this.theme = this.level.theme;
     this.numPlayers = numPlayers;
@@ -40,12 +40,12 @@
     this.orderTimer = 2.5;
     this.intensity = 0;
     this.darkness = this.level.darkness || 0;
-    this.blackout = { next: 32, t: 0, on: false };
+    this.blackout = { next: TU.blackout.firstAt, t: 0, on: false };
     this.tutorial = this.level.tutorial ? { step: 0, t: 0 } : null;
     this.warnBeepT = 0;
     this.build();
     for (var i = 0; i < (this.level.startOrders || 1); i++) this.spawnOrder(i === 0 && this.level.tutorial ? 'landing' : null, true);
-    this.orderTimer = U.rand(this.level.orderGap[0], this.level.orderGap[1]) * 0.6;
+    this.orderTimer = U.rand(this.level.orderGap[0], this.level.orderGap[1]) * TU.orders.firstGapFactor;
   }
 
   Game.prototype.build = function () {
@@ -137,8 +137,8 @@
   Game.prototype.updateOrders = function (dt) {
     var live = this.liveOrders();
     this.orderTimer -= dt;
-    if (live.length === 0) this.orderTimer = Math.min(this.orderTimer, 1.2);
-    else if (live.length === 1 && !this.tutorialText()) this.orderTimer = Math.min(this.orderTimer, 5);
+    if (live.length === 0) this.orderTimer = Math.min(this.orderTimer, TU.orders.emptyRefill);
+    else if (live.length === 1 && !this.tutorialText()) this.orderTimer = Math.min(this.orderTimer, TU.orders.singleRefill);
     if (this.orderTimer <= 0 && live.length < this.level.maxOrders) {
       this.spawnOrder();
       this.orderTimer = U.rand(this.level.orderGap[0], this.level.orderGap[1]);
@@ -157,9 +157,9 @@
       if (o.timeLeft <= 0) {
         o.timeLeft = 0; o.done = true; o.removing = 0.5; o.flash = 1; o.failed = true;
         this.stats.expired++;
-        this.addScore(-EXPIRE_PENALTY);
+        this.addScore(-TU.orders.expirePenalty);
         OW.sfx('order_fail');
-        OW.fx('text', 640, 150, { text: '¡Caducado! ' + o.name + ' -' + EXPIRE_PENALTY + '€', color: '#ff6b6b', size: 26 });
+        OW.fx('text', 640, 150, { text: '¡Caducado! ' + o.name + ' -' + TU.orders.expirePenalty + '€', color: '#ff6b6b', size: 26 });
         this.shake = Math.max(this.shake, 6);
       }
     }
@@ -179,7 +179,7 @@
     }
     if (match) {
       var frac = match.timeLeft / match.timeTotal;
-      var tip = U.round5(match.value * 0.6 * frac);
+      var tip = U.round5(match.value * TU.orders.tipFactor * frac);
       match.done = true; match.removing = 0.5; match.flash = 1; match.delivered = true;
       this.addScore(match.value + tip);
       this.stats.delivered++; this.stats.tips += tip;
@@ -199,7 +199,7 @@
       OW.fx('smoke', cx, cy - 10, { count: 8 });
       this.shake = Math.max(this.shake, 5);
     }
-    this.returns.push({ t: RETURN_DELAY });
+    this.returns.push({ t: PL.returnDelay });
   };
 
   /* ---------------- Interacción ---------------- */
@@ -334,7 +334,7 @@
     switch (st.type) {
       case 'desk':
         if (!p.held && it && it.kind === 'spec') {
-          p.action = 'typing'; it.prog += dt / DESK_TIME; st.workT = 0.15;
+          p.action = 'typing'; it.prog += dt / PL.deskTime; st.workT = 0.15;
           st.sfxT -= dt; if (st.sfxT <= 0) { st.sfxT = 0.13; OW.sfx('type'); }
           st.fxT -= dt; if (st.fxT <= 0) { st.fxT = 0.18; OW.fx('glyphs', st.x + T / 2, st.y + 10, { count: 2 }); }
           if (it.prog >= 1) {
@@ -347,7 +347,7 @@
         break;
       case 'testbench':
         if (!p.held && it && it.kind === 'build') {
-          p.action = 'testing'; it.prog += dt / TEST_TIME; st.workT = 0.15;
+          p.action = 'testing'; it.prog += dt / PL.testTime; st.workT = 0.15;
           st.sfxT -= dt; if (st.sfxT <= 0) { st.sfxT = 0.3; OW.sfx('type', { pitch: 1.5 }); }
           if (it.prog >= 1) {
             st.item = item('tested', it.lane);
@@ -355,13 +355,13 @@
             OW.fx('sparks', st.x + T / 2, st.y + 18, { count: 8, color: '#7cff9b' });
             OW.fx('text', st.x + T / 2, st.y - 14, { text: '✔ tests OK', color: '#7cff9b', size: 16 });
             this.emit('tested');
-            if (Math.random() < this.level.bugChance && this.aliveBugs() < MAX_BUGS) this.spawnBug(st);
+            if (Math.random() < this.level.bugChance && this.aliveBugs() < TU.bugs.maxAlive) this.spawnBug(st);
           }
         }
         break;
       case 'review':
         if (!p.held && st.dirty > 0) {
-          p.action = 'reviewing'; st.washT += dt / REVIEW_TIME; st.workT = 0.15;
+          p.action = 'reviewing'; st.washT += dt / PL.reviewTime; st.workT = 0.15;
           st.sfxT -= dt; if (st.sfxT <= 0) { st.sfxT = 0.2; OW.sfx('type', { pitch: 0.8 }); }
           if (st.washT >= 1) {
             st.washT = 0; st.dirty--; st.clean++;
@@ -372,7 +372,7 @@
         }
         break;
       case 'coffee':
-        p.action = 'drinking'; p.drinkT += dt / COFFEE_TIME; st.workT = 0.15; st.drinkT = p.drinkT;
+        p.action = 'drinking'; p.drinkT += dt / TU.coffee.drinkTime; st.workT = 0.15; st.drinkT = p.drinkT;
         st.fxT -= dt; if (st.fxT <= 0) { st.fxT = 0.25; OW.fx('steam', st.x + T / 2, st.y + 6, { count: 2 }); }
         if (p.drinkT >= 1) {
           p.drinkT = 0; st.drinkT = 0; p.energy = 1; this.stats.coffees++;
@@ -396,7 +396,7 @@
       var dx = s.x + T / 2 - p.x, dy = s.y + T / 2 - p.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
       if (d > T * 1.9) continue;
       if ((dx * p.dir.x + dy * p.dir.y) / d < 0.45 && d > T * 0.9) continue;
-      s.fire -= dt / 0.9;
+      s.fire -= dt / TU.fire.extinguishTime;
       if (s.fire <= 0) {
         s.fire = 0; s.spreadT = 0;
         OW.fx('steam', s.x + T / 2, s.y + 10, { count: 10 });
@@ -407,7 +407,7 @@
 
   Game.prototype.ignite = function (st) {
     if (st.fire > 0 || DECOR[st.type] && st.type !== 'server_rack') return;
-    st.fire = 0.35; st.spreadT = U.rand(4, 5.5);
+    st.fire = TU.fire.startLevel; st.spreadT = U.rand(TU.fire.spreadEvery[0], TU.fire.spreadEvery[1]);
     if (st.bug) { st.bug.target = null; st.bug.state = 'fly'; st.bug = null; }
     this.stats.fires++;
     OW.sfx('fire');
@@ -563,7 +563,7 @@
   };
 
   Game.prototype.updateStations = function (dt) {
-    var heat = this.level.heat || 1, warnAt = WARN_AFTER / heat, burnAt = warnAt + BURN_AFTER / heat;
+    var heat = this.level.heat || 1, warnAt = PL.warnAfter / heat, burnAt = warnAt + PL.burnAfter / heat;
     var anyWarn = false;
     for (var i = 0; i < this.stations.length; i++) {
       var st = this.stations[i];
@@ -574,7 +574,7 @@
         if (it.kind === 'code') {
           st.cookT += dt;
           st.fxT -= dt; if (st.fxT <= 0) { st.fxT = 0.5; OW.fx('steam', st.x + T / 2, st.y + 4, { count: 1 }); }
-          if (st.cookT >= COMPILE_TIME) {
+          if (st.cookT >= PL.compileTime) {
             st.item = item('build', it.lane); st.overT = 0;
             OW.sfx('compile_done'); OW.fx('sparks', st.x + T / 2, st.y + 16, { count: 8 });
           }
@@ -592,11 +592,11 @@
         }
       }
       if (st.fire > 0) {
-        st.fire = Math.min(1, st.fire + dt * 0.35);
+        st.fire = Math.min(1, st.fire + dt * TU.fire.growRate);
         st.spreadT -= dt;
         st.fxT -= dt; if (st.fxT <= 0) { st.fxT = 0.35; OW.fx('smoke', st.x + T / 2, st.y - 4, { count: 1 }); }
         if (st.spreadT <= 0) {
-          st.spreadT = U.rand(4, 5.5);
+          st.spreadT = U.rand(TU.fire.spreadEvery[0], TU.fire.spreadEvery[1]);
           var nb = [[1, 0], [-1, 0], [0, 1], [0, -1]], cands = [];
           for (var k = 0; k < 4; k++) {
             var n = this.stationAt(st.col + nb[k][0], st.row + nb[k][1]);
@@ -605,8 +605,8 @@
           if (cands.length) this.ignite(U.pick(cands));
         }
       }
-      if (st.type === 'conveyor' && st.item && !(st.fire > 0)) {
-        st.convT += dt / CONVEYOR_TIME;
+      if (st.type === 'conveyor' && st.item && !(st.fire > 0) && this.level.conveyors !== false) {
+        st.convT += dt / PL.conveyorTime;
         if (st.convT >= 1) {
           st.convT = 1;
           var nx = this.stationAt(st.col + st.dir.x, st.row + st.dir.y);
@@ -641,12 +641,12 @@
       }
       if (bo.on) {
         bo.t += dt;
-        var dark;
+        var dark, BO = TU.blackout, full = BO.darkness, fadeAt = BO.duration - 1;
         if (bo.t < 0.8) dark = (Math.sin(bo.t * 40) > 0 ? 0.88 : 0.2) * (bo.t / 0.8) + 0.1;
-        else if (bo.t < 8.5) dark = 0.9;
-        else dark = U.lerp(0.9, base, U.clamp((bo.t - 8.5) / 1, 0, 1));
+        else if (bo.t < fadeAt) dark = full;
+        else dark = U.lerp(full, base, U.clamp((bo.t - fadeAt) / 1, 0, 1));
         this.darkness = dark;
-        if (bo.t > 9.5) { bo.on = false; bo.next = this.t + U.rand(22, 30); this.darkness = base; }
+        if (bo.t > BO.duration) { bo.on = false; bo.next = this.t + U.rand(BO.every[0], BO.every[1]); this.darkness = base; }
         return;
       }
     }
@@ -661,7 +661,7 @@
       if (s.fire > 0) L.push({ x: cx, y: cy - 10, r: 120 + 30 * s.fire, color: '#ff9a3c' });
       switch (s.type) {
         case 'desk': L.push({ x: cx, y: cy - 16, r: 70, color: '#7fd8ff' }); break;
-        case 'compiler': L.push({ x: cx, y: cy - 4, r: 48, color: s.item && s.item.kind === 'build' && s.overT > (WARN_AFTER / (this.level.heat || 1)) ? '#ff4040' : '#5cff8a' }); break;
+        case 'compiler': L.push({ x: cx, y: cy - 4, r: 48, color: s.item && s.item.kind === 'build' && s.overT > (PL.warnAfter / (this.level.heat || 1)) ? '#ff4040' : '#5cff8a' }); break;
         case 'testbench': L.push({ x: cx, y: cy - 8, r: 52, color: '#80ffea' }); break;
         case 'deploy': L.push({ x: cx, y: cy - 8, r: 72, color: '#ff8a80' }); break;
         case 'coffee': L.push({ x: cx, y: cy - 8, r: 40, color: '#ffcc80' }); break;
@@ -681,9 +681,9 @@
   /* ---------------- Dibujado del mundo ---------------- */
   Game.prototype.stationView = function (st) {
     var state = 'idle', progress = null, it = st.item;
-    var warnAt = WARN_AFTER / (this.level.heat || 1);
+    var warnAt = PL.warnAfter / (this.level.heat || 1);
     if (st.type === 'compiler' && it) {
-      if (it.kind === 'code') { state = 'working'; progress = U.clamp(st.cookT / COMPILE_TIME, 0, 1); }
+      if (it.kind === 'code') { state = 'working'; progress = U.clamp(st.cookT / PL.compileTime, 0, 1); }
       else if (it.kind === 'build') state = st.overT > warnAt ? 'warning' : 'done';
     } else if ((st.type === 'desk' && it && it.kind === 'spec') || (st.type === 'testbench' && it && it.kind === 'build')) {
       if (it.prog > 0) progress = U.clamp(it.prog, 0, 1);

@@ -29,8 +29,12 @@
     SCHEMES: SCHEMES,
     mouse: mouse,
     setKey: setKey,
+    /* Suelta todas las teclas (p. ej. al abrir el panel de ajustes, para que nadie siga andando). */
+    releaseAll: function () { down = {}; pressed = {}; },
     attach: function (canvas) {
       window.addEventListener('keydown', function (e) {
+        // Con el panel de ajustes (F9) abierto, las teclas son de sus campos, no del juego.
+        if (Input.blockKeys && Input.blockKeys(e)) return;
         // Con el juego fuera de la vista (leyendo "Acerca del juego") las teclas vuelven a ser de la página.
         if ((window.scrollY || window.pageYOffset || 0) > window.innerHeight * 0.5) return;
         if (PREVENT[e.code]) e.preventDefault();

@@ -57,21 +57,108 @@
     try { OW.FX.spawn(type, x, y, opts || {}); } catch (e) { /* silencio */ }
   };
 
-  /* Niveles de dificultad. Por defecto "Junior Optimista" (índice 1). Los valores 1 equivalen al
-   * equilibrio original del juego, que hoy sólo conserva "Rockstar 10x" (algo más duro aún).
-   * order: tiempo de los pedidos · gap: espera entre pedidos · heat: velocidad de quemado
-   * bugs: probabilidad de bug · drain: gasto de café (0 = no necesita café) · boss: velocidad del manager · stars: umbrales
-   * maxOrders: tope de pedidos simultáneos (si no se indica, el del nivel) */
-  OW.DIFFICULTIES = [
-    { name: 'Becario Feliz', desc: 'Pedidos sin prisa, sin necesidad de café y el manager de vacaciones mentales.',
-      order: 2.2, gap: 1.4, heat: 0.4, bugs: 0.15, drain: 0, boss: 0.5, stars: 0.45, maxOrders: 1, color: '#7cff9b' },
-    { name: 'Junior Optimista', desc: '"Esto lo saco en una tarde." Mucho margen para aprender.',
-      order: 1.6, gap: 1.25, heat: 0.6, bugs: 0.45, drain: 0.5, boss: 0.7, stars: 0.65, maxOrders: 2, color: '#4da3ff' },
-    { name: 'Senior Cafeinado', desc: 'Deadlines de verdad y dos cafés por hora, pero con oficio.',
-      order: 1.25, gap: 1.1, heat: 0.8, bugs: 0.75, drain: 0.8, boss: 0.85, stars: 0.85, color: '#ffd23f' },
-    { name: 'Rockstar 10x', desc: 'Deploy en viernes, sin tests y con el servidor ardiendo. Suerte.',
-      order: 0.8, gap: 0.85, heat: 1.35, bugs: 1.4, drain: 1.3, boss: 1.2, stars: 1, color: '#ff5d73' }
-  ];
+  /* ---------- Ajustes de equilibrio (js/core/tuning.js) ----------
+   * OW.TUNING contiene los valores; aquí se guardan los de fábrica y se aplican/guardan los cambios
+   * hechos desde el panel de desarrollador (F9) en localStorage. Los objetos y arrays de OW.TUNING se
+   * modifican SIEMPRE en el sitio, para que los alias (OW.DIFFICULTIES, OW.RECIPE_VALUE...) sigan valiendo. */
+  var TUNING_KEY = 'overworking_tuning_v1';
+  function clone(v) { return JSON.parse(JSON.stringify(v)); }
+  // hoja = número, texto, booleano o array de valores simples (un array de objetos, como las dificultades, no lo es)
+  function isLeaf(v) {
+    if (Array.isArray(v)) return !(v.length && v[0] !== null && typeof v[0] === 'object');
+    return v === null || typeof v !== 'object';
+  }
+  OW.TUNING = OW.TUNING || {};
+  var Tuning = (OW.Tuning = {
+    KEY: TUNING_KEY,
+    defaults: clone(OW.TUNING),
+    /* validate(pathString, value) → true si es aceptable (lo registra el panel con sus min/max). */
+    validate: null,
+    get: function (path, root) {
+      var o = root || OW.TUNING, ps = typeof path === 'string' ? path.split('.') : path;
+      for (var i = 0; i < ps.length; i++) { if (o == null) return undefined; o = o[ps[i]]; }
+      return o;
+    },
+    def: function (path) { return this.get(path, this.defaults); },
+    /* Comprueba que el valor tiene el mismo tipo que el de fábrica. */
+    sameShape: function (d, v) {
+      if (Array.isArray(d)) {
+        if (!Array.isArray(v) || !v.length || v.length > 32) return false;
+        var t = typeof d[0];
+        for (var i = 0; i < v.length; i++) if (typeof v[i] !== t || (t === 'number' && !isFinite(v[i]))) return false;
+        return true;
+      }
+      if (typeof d === 'number') return typeof v === 'number' && isFinite(v);
+      if (typeof d === 'string') return typeof v === 'string' && v.length <= 200;
+      return typeof d === typeof v;
+    },
+    /* Fija un valor hoja. Devuelve true si se aplicó. */
+    set: function (path, value) {
+      var ps = typeof path === 'string' ? path.split('.') : path.slice(), key = ps.pop();
+      var parent = this.get(ps), d = this.def(ps.concat([key]));
+      if (parent == null || d === undefined || !isLeaf(d) || !this.sameShape(d, value)) return false;
+      // los arrays de tamaño fijo (rangos, estrellas, puntos por ingredientes) no pueden cambiar de longitud
+      if (Array.isArray(d) && key !== 'recipes' && key !== 'weights' && value.length !== d.length) return false;
+      if (this.validate && !this.validate(ps.concat([key]).join('.'), value)) return false;
+      if (Array.isArray(parent[key])) { parent[key].length = 0; Array.prototype.push.apply(parent[key], value); }
+      else parent[key] = value;
+      return true;
+    },
+    reset: function (path) { var d = this.def(path); if (d !== undefined) this.set(path, clone(d)); },
+    /* Lista de hojas que difieren de fábrica: { 'player.maxSpeed': 350, ... } */
+    diff: function () {
+      var out = {};
+      (function walk(d, c, pre) {
+        for (var k in d) {
+          if (!Object.prototype.hasOwnProperty.call(d, k)) continue;
+          var p = pre ? pre + '.' + k : k;
+          if (isLeaf(d[k])) { if (c && JSON.stringify(c[k]) !== JSON.stringify(d[k])) out[p] = clone(c[k]); }
+          else walk(d[k], c && c[k], p);
+        }
+      })(this.defaults, OW.TUNING, '');
+      return out;
+    },
+    count: function () { return Object.keys(this.diff()).length; },
+    /* Aplica un mapa de overrides; devuelve cuántos se aceptaron. */
+    apply: function (map) {
+      var n = 0;
+      for (var p in map) if (Object.prototype.hasOwnProperty.call(map, p) && this.set(p, map[p])) n++;
+      this.sanitize();
+      return n;
+    },
+    /* recipes y weights de cada nivel van emparejados: si no cuadran, se vuelve a fábrica. */
+    sanitize: function () {
+      var L = OW.TUNING.levels || {};
+      for (var id in L) {
+        var l = L[id], ok = l.recipes && l.weights && l.recipes.length === l.weights.length && l.recipes.length > 0;
+        if (ok && OW.RECIPES) for (var i = 0; i < l.recipes.length; i++) if (!OW.RECIPES[l.recipes[i]]) ok = false;
+        if (!ok) { this.reset('levels.' + id + '.recipes'); this.reset('levels.' + id + '.weights'); }
+      }
+    },
+    resetAll: function () {
+      var d = this.diff();
+      for (var p in d) this.reset(p);
+      this.save();
+    },
+    load: function () {
+      try {
+        var raw = window.localStorage.getItem(TUNING_KEY);
+        if (raw) { var o = JSON.parse(raw); if (o && typeof o === 'object') this.apply(o.overrides || o); }
+      } catch (e) { /* localStorage no disponible o JSON roto: se ignora */ }
+      this.save(); // limpia overrides que ya coinciden con tuning.js
+    },
+    save: function () {
+      try {
+        var d = this.diff();
+        if (Object.keys(d).length) window.localStorage.setItem(TUNING_KEY, JSON.stringify({ version: 1, overrides: d }));
+        else window.localStorage.removeItem(TUNING_KEY);
+      } catch (e) { /* nada */ }
+    }
+  });
+  void Tuning;
+
+  /* Niveles de dificultad (valores en js/core/tuning.js). Por defecto "Junior Optimista" (índice 1). */
+  OW.DIFFICULTIES = OW.TUNING.difficulties;
   OW.difficulty = function () {
     var i = OW.Save && OW.Save.data.difficulty;
     return OW.DIFFICULTIES[i] || OW.DIFFICULTIES[1];
@@ -83,7 +170,7 @@
     c.timeMul = (lv.timeMul || 1) * d.order;
     c.orderGap = [lv.orderGap[0] * d.gap, lv.orderGap[1] * d.gap];
     c.heat = (lv.heat || 1) * d.heat;
-    c.bugChance = Math.min(0.8, (lv.bugChance || 0) * d.bugs);
+    c.bugChance = Math.min(OW.TUNING.bugs.maxChance, (lv.bugChance || 0) * d.bugs);
     if (d.maxOrders) {
       c.maxOrders = Math.min(lv.maxOrders, d.maxOrders);
       c.startOrders = Math.min(lv.startOrders || 1, c.maxOrders);

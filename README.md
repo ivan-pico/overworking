@@ -83,6 +83,27 @@ nivel. El progreso se guarda en `localStorage`.
 | 4 | El Datacenter | Cintas transportadoras, servidores que se recalientan antes, luz tenue |
 | 5 | Viernes 17:59 · Deploy Day | Todo a la vez + apagones |
 
+## Ajustar la dificultad (tuning)
+
+Todos los parámetros de equilibrio están en **`js/core/tuning.js`** (`OW.TUNING`), cada uno con un
+comentario que explica qué hace y su unidad: velocidad, aceleración y dash de los devs, café,
+manager, tiempos del pipeline, propina y multa, puntos/tiempo de las recetas, fuego, bugs, apagones,
+las 4 dificultades (multiplicadores, incluido `walk` para la velocidad al andar y `maxOrders`) y los
+parámetros de cada nivel por id (duración, recetas y pesos, PRs, peligros, pedidos, estrellas...).
+Los mapas y textos de los niveles siguen en `levels.js`. Cambia un valor, guarda y recarga.
+
+**Panel de ajustes en el juego (modo desarrollador):** pulsa **F9** en cualquier momento (o abre
+`index.html?dev=1`, que muestra un botón `⚙ DEV`). La partida se congela mientras está abierto.
+
+- Pestañas *Jugador*, *Pipeline y pedidos*, *Dificultades* y *Niveles* (tablas editables).
+- `●` = se nota al instante; `↻` = se aplica al empezar un nivel: usa **Reiniciar nivel con estos ajustes**.
+- Los valores cambiados se resaltan en amarillo y tienen un botón `↺` para volver al de `tuning.js`.
+- Los cambios se guardan en `localStorage` (`overworking_tuning_v1`), sólo en ese navegador; mientras
+  haya alguno activo se ve el aviso `DEV: ajustes modificados` en la esquina.
+- **Exportar tuning.js** genera el fichero completo (con comentarios) con los valores actuales, lo copia
+  y permite descargarlo: sustituye `js/core/tuning.js` por él y los cambios quedan para todos.
+- **Exportar / importar JSON** para compartir sólo los cambios; **Restaurar todo por defecto** los borra.
+
 ## Estructura
 
 ```
@@ -100,13 +121,15 @@ js/art/                 OW.Art / OW.FX: todo el dibujo procedural
   ui.js                 paneles, botones, tarjetas de pedido, iconos, logo, fondo de menú
 js/core/                lógica del juego
   fallbacks.js          sustitutos mínimos si falta ART o AUDIO
-  config.js             constantes, utilidades, guardado
+  tuning.js             TODOS los parámetros de equilibrio (OW.TUNING), comentados
+  config.js             constantes, utilidades, guardado, overrides de tuning (OW.Tuning)
   input.js              teclado (event.code), mandos (Gamepad API) y ratón
-  levels.js             recetas, mapas 18×9 y parámetros de cada nivel
+  levels.js             recetas, mapas 18×9 y textos de cada nivel (+ sus parámetros desde tuning.js)
   entities.js           jugadores, bugs y manager
   game.js               partida: estaciones, pipeline, pedidos, peligros, dibujado del mundo
   hud.js                HUD de partida
   menus.js              pantallas: título, menú, opciones, controles, créditos, selector, pausa, resultados
+  devpanel.js           panel de ajustes en el juego (F9) · estilos en css/devpanel.css
   main.js               bucle principal (paso fijo 60 Hz) y ganchos de depuración
 tools/                  galería de arte y banco de pruebas de audio
 ```

@@ -58,16 +58,19 @@
     this.zzzT = 0; this.dustT = 0; this.sfxT = 0;
     this.r = PLAYER_R;
   }
+  /* Multiplicador de velocidad por cansancio (umbrales en OW.TUNING.coffee). */
   Player.prototype.speedMul = function () {
-    if (this.energy < 0.1) return 0.5;
-    if (this.energy < 0.3) return 0.75;
+    var K = OW.TUNING.coffee;
+    if (this.energy < K.zombieBelow) return K.zombieMul;
+    if (this.energy < K.slowBelow) return K.slowMul;
     return 1;
   };
   Player.prototype.update = function (dt, ctl, game) {
-    this.energy = Math.max(0, this.energy - dt * OW.difficulty().drain / 90);
+    var P = OW.TUNING.player, D = OW.difficulty();
+    this.energy = Math.max(0, this.energy - dt * D.drain / OW.TUNING.coffee.duration);
     if (this.immune > 0) this.immune -= dt;
     if (this.dashCd > 0) this.dashCd -= dt;
-    var MAX = 287.5 * this.speedMul(), ACC = 2400, FRICTION = 2800;
+    var MAX = P.maxSpeed * this.speedMul() * (D.walk == null ? 1 : D.walk), ACC = P.accel, FRICTION = P.friction;
 
     if (this.stun > 0) {
       this.stun -= dt;
@@ -91,8 +94,8 @@
       this.vy = U.approach(this.vy, 0, FRICTION * dt);
     }
     if (ctl.dash && this.dashCd <= 0 && this.stun <= 0) {
-      this.dashT = 0.16; this.dashCd = 0.75;
-      var DS = 720 * (0.7 + 0.3 * this.speedMul());
+      this.dashT = P.dashTime; this.dashCd = P.dashCooldown;
+      var DS = P.dashSpeed * (P.dashTiredKeep + (1 - P.dashTiredKeep) * this.speedMul());
       this.vx = this.dir.x * DS; this.vy = this.dir.y * DS;
       OW.sfx('dash'); OW.fx('dust', this.x, this.y, { count: 6 });
     }
@@ -103,7 +106,7 @@
     this.moving = sp > 20;
     if (this.moving) this.walkPhase += dt * (6 + sp / 30);
 
-    if (this.energy < 0.1) {
+    if (this.energy < OW.TUNING.coffee.zombieBelow) {
       this.zzzT -= dt;
       if (this.zzzT <= 0) { this.zzzT = 1.6; OW.fx('zzz', this.x + 10, this.y - 60, { count: 1 }); }
     }
@@ -122,7 +125,7 @@
   function Bug(x, y) {
     this.x = x; this.y = y; this.angle = Math.random() * Math.PI * 2; this.phase = Math.random() * 10;
     this.squashed = 0; this.state = 'fly'; this.target = null; this.sitT = 0; this.wanderT = 0.6;
-    this.speed = U.rand(95, 125);
+    this.speed = U.rand(OW.TUNING.bugs.speed[0], OW.TUNING.bugs.speed[1]);
   }
   Bug.prototype.update = function (dt, game) {
     this.phase += dt * 12;
@@ -154,7 +157,7 @@
     this.y = U.clamp(this.y, C.OY + 8, C.OY + C.ROWS * C.TILE - 8);
     if (this.target && d < 10) {
       if (this.target.bug || this.target.fire > 0) { this.target = null; return; }
-      this.state = 'sit'; this.sitT = U.rand(9, 14); this.target.bug = this;
+      this.state = 'sit'; this.sitT = U.rand(OW.TUNING.bugs.sitTime[0], OW.TUNING.bugs.sitTime[1]); this.target.bug = this;
       this.x = tx; this.y = ty;
     }
   };
@@ -167,18 +170,20 @@
     this.homeCol = col; this.homeRow = row;
     this.x = C.OX + col * C.TILE + C.TILE / 2; this.y = C.OY + row * C.TILE + C.TILE / 2 + 10;
     this.dir = { x: 0, y: 1 }; this.moving = false; this.walkPhase = 0;
-    this.state = 'away'; this.timer = U.rand(14, 20);
+    var MG = OW.TUNING.manager;
+    this.state = 'away'; this.timer = U.rand(MG.firstVisit[0], MG.firstVisit[1]);
     this.talking = false; this.text = ''; this.path = null; this.repath = 0; this.victim = null;
     this.visible = false; this.alpha = 0;
   }
   Manager.prototype.update = function (dt, game) {
+    var MG = OW.TUNING.manager;
     this.alpha = U.approach(this.alpha, this.visible ? 1 : 0, dt * 3);
     switch (this.state) {
       case 'away':
         this.visible = false;
         this.timer -= dt;
         if (this.timer <= 0) {
-          this.state = 'chase'; this.timer = 14; this.visible = true;
+          this.state = 'chase'; this.timer = MG.chaseTime; this.visible = true;
           this.x = C.OX + this.homeCol * C.TILE + C.TILE / 2; this.y = C.OY + this.homeRow * C.TILE + C.TILE / 2 + 10;
           OW.sfx('manager');
           OW.fx('text', this.x, this.y - 70, { text: '¡Ey, equipo!', color: '#ffd23f' });
@@ -190,15 +195,15 @@
         if (!target || this.timer <= 0) { this.leave(); break; }
         this.repath -= dt;
         if (this.repath <= 0 || !this.path) { this.repath = 0.4; this.path = game.findPath(this.x, this.y, target.x, target.y); }
-        this.walk(dt, 120 * OW.difficulty().boss, target);
+        this.walk(dt, MG.chaseSpeed * OW.difficulty().boss, target);
         var d = U.dist(this.x, this.y, target.x, target.y);
-        if (d < 34 && target.stun <= 0 && target.immune <= 0) {
+        if (d < MG.catchRadius && target.stun <= 0 && target.immune <= 0) {
           if (target.dashing()) {
-            target.immune = 1.0;
+            target.immune = MG.dodgeImmune;
             OW.fx('text', target.x, target.y - 70, { text: '¡Esquivado!', color: '#7cff9b' });
           } else {
-            target.stun = 2.5; target.immune = 5; target.action = 'stunned';
-            this.state = 'talk'; this.timer = 2.5; this.talking = true; this.text = U.pick(LINES);
+            target.stun = MG.stunTime; target.immune = MG.immuneAfter; target.action = 'stunned';
+            this.state = 'talk'; this.timer = MG.stunTime; this.talking = true; this.text = U.pick(LINES);
             this.victim = target; this.moving = false;
             // separarse un poco para que no se solapen los sprites durante la charla
             // (preferimos ponerse al lado, en horizontal, para no tapar al dev)
@@ -230,8 +235,8 @@
         var hx = C.OX + this.homeCol * C.TILE + C.TILE / 2, hy = C.OY + this.homeRow * C.TILE + C.TILE / 2 + 10;
         this.repath -= dt;
         if (this.repath <= 0 || !this.path) { this.repath = 0.8; this.path = game.findPath(this.x, this.y, hx, hy); }
-        this.walk(dt, 100 * OW.difficulty().boss, { x: hx, y: hy });
-        if (U.dist(this.x, this.y, hx, hy) < 12) { this.state = 'away'; this.timer = U.rand(16, 24); this.visible = false; }
+        this.walk(dt, MG.returnSpeed * OW.difficulty().boss, { x: hx, y: hy });
+        if (U.dist(this.x, this.y, hx, hy) < 12) { this.state = 'away'; this.timer = U.rand(MG.awayTime[0], MG.awayTime[1]); this.visible = false; }
         break;
       }
     }

@@ -9,6 +9,7 @@
 
   var App = (OW.App = {
     screen: null, name: '', players: 1, game: null, t: 0, renderT: 0,
+    frozen: false, // true mientras está abierto el panel de ajustes: la simulación se detiene
     go: function (name, params) {
       var s = OW.Screens[name];
       if (!s) throw new Error('Pantalla desconocida: ' + name);
@@ -50,8 +51,12 @@
 
   OW.Input.attach(canvas);
   OW.Input.onAnyKey = function () { try { OW.Audio.init(); } catch (e) { /* nada */ } };
-  window.addEventListener('blur', function () { if (App.name === 'play') App.go('pause'); });
+  window.addEventListener('blur', function () { if (App.name === 'play' && !App.frozen) App.go('pause'); });
 
+  // ajustes de equilibrio modificados desde el panel (F9), guardados en localStorage
+  if (OW.Tuning) OW.Tuning.load();
+  if (OW.syncLevels) OW.syncLevels();
+  if (OW.DevPanel) OW.DevPanel.refreshBadge();
   OW.Save.load();
   try { OW.Art.init(); } catch (e) { console.error('OW.Art.init falló:', e); }
 
@@ -85,7 +90,7 @@
     if (last == null) last = ts;
     var dt = Math.min(0.1, Math.max(0, (ts - last) / 1000));
     last = ts;
-    acc += dt;
+    acc = App.frozen ? 0 : acc + dt;
     var n = 0;
     while (acc >= C.DT && n < 6) { step(C.DT); acc -= C.DT; n++; }
     if (n >= 6) acc = 0;

@@ -195,6 +195,7 @@
         'Sin café vas a cámara lenta. Los PR desplegados vuelven a REVISIÓN: límpialos para reutilizarlos.'
       ];
       for (var i = 0; i < tips.length; i++) U.text(ctx, tips[i], 640, 500 + i * 32, { size: 16, color: '#ffffff', weight: 'normal' });
+      U.text(ctx, 'F9: panel de ajustes (modo desarrollador)', 640, 642, { size: 13, color: 'rgba(207,198,239,0.6)', weight: 'normal' });
       footer(ctx, 'Pulsa cualquier botón para volver');
     }
   };
