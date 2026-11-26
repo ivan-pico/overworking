@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>OVERWORKING · Galería de arte</title>
+<style>
+  body { margin: 0; background: #14102a; color: #e8e4ff; font-family: "Trebuchet MS", system-ui, sans-serif; }
+  h2 { margin: 18px 16px 6px; font-size: 18px; color: #ffd23f; }
+  canvas { display: block; margin: 0 16px; }
+  #err { position: fixed; top: 0; left: 0; right: 0; background: #b00020; color: #fff; font: 13px monospace; white-space: pre; z-index: 9; }
+  #nav { padding: 8px 16px; font-size: 13px; }
+  #nav a { color: #8be9fd; margin-right: 10px; }
+</style>
+</head>
+<body>
+<div id="err"></div>
+<div id="nav">Secciones:
+  <a href="?s=all">todo</a><a href="?s=stations">estaciones</a><a href="?s=states">estados</a><a href="?s=items">items</a>
+  <a href="?s=chars">personajes</a><a href="?s=misc">bugs/manager/fuego</a><a href="?s=ui">UI</a><a href="?s=menu">menú</a>
+  <a href="?s=scene&theme=openspace">escena</a><a href="?s=scenes">escenas (todas)</a><a href="?s=fx">FX</a>
+  <a href="?s=all&anim=1">animado</a> · params: s, z (zoom), t, theme, dark, anim
+</div>
+<script>
+  window.__errors = [];
+  window.onerror = function (m, src, l, c, e) {
+    window.__errors.push(m + ' @' + (src || '').split('/').pop() + ':' + l + ':' + c);
+    document.getElementById('err').textContent = window.__errors.join('\n');
+    document.title = 'ERROR: ' + m;
+  };
+</script>
+<script src="../js/art/art.js"></script>
+<script src="../js/art/characters.js"></script>
+<script src="../js/art/stations.js"></script>
+<script src="../js/art/items.js"></script>
+<script src="../js/art/fx.js"></script>
+<script src="../js/art/ui.js"></script>
+<script>
+(function () {
+  var A = OW.Art, FX = OW.FX;
+  var Q = {}; location.search.slice(1).split('&').forEach(function (kv) { if (!kv) return; var p = kv.split('='); Q[p[0]] = decodeURIComponent(p[1] || ''); });
+  var SEC = Q.s || 'all', Z = +(Q.z || 1), T0 = +(Q.t || 1.3), ANIM = Q.anim === '1';
+  var THEMES = ['garage', 'openspace', 'consulting', 'datacenter', 'deploy'];
+  var TYPES = ['counter', 'spec_front', 'spec_back', 'spec_data', 'desk', 'compiler', 'testbench', 'pr_stack', 'deploy', 'review', 'trash', 'coffee', 'conveyor', 'wall', 'plant', 'server_rack'];
+  var sections = [];
+  function section(id, title, w, h, draw) { sections.push({ id: id, title: title, w: w, h: h, draw: draw }); }
+  function label(ctx, s, x, y, c) { ctx.save(); ctx.font = 'bold 11px ' + A.FONT; ctx.fillStyle = c || '#bdb6e6'; ctx.textAlign = 'center'; ctx.fillText(s, x, y); ctx.restore(); }
+
+  A.init();
+
+  section('stations', 'Estaciones × temas (idle)', 16 * 84 + 120, 5 * 170 + 30, function (ctx, t) {
+    THEMES.forEach(function (th, r) {
+      var y0 = 70 + r * 170;
+      ctx.fillStyle = A.theme(th).floor; ctx.fillRect(100, y0 - 64, 16 * 84, 160);
+      label(ctx, th, 50, y0 + 30, '#ffd23f');
+      TYPES.forEach(function (ty, c) {
+        var x = 110 + c * 84;
+        A.drawStation(ctx, { type: ty, theme: th, state: 'idle', dir: c % 2 ? 'down' : 'right' }, x, y0, 64, t + c * 0.3);
+        if (r === 0) label(ctx, ty, x + 32, 14);
+      });
+    });
+  });
+
+  section('states', 'Estados de estaciones', 1400, 560, function (ctx, t) {
+    ctx.fillStyle = A.theme('openspace').floor; ctx.fillRect(0, 0, 1400, 560);
+    var rows = [
+      ['compiler', ['idle', 'working', 'done', 'warning', 'fire', 'blocked'], [null, 0.55, 1, 0.8, null, null]],
+      ['desk', ['idle', 'working', 'fire', 'blocked', 'idle', 'idle'], [null, 0.4, null, null, null, null]],
+      ['testbench', ['idle', 'working', 'done', 'blocked', 'idle', 'idle'], [null, 0.6, null, null, null, null]],
+      ['deploy', ['idle', 'working', 'done', 'idle', 'idle', 'idle'], [null, null, null, null, null, null]],
+      ['review', ['idle', 'working', 'done', 'idle', 'idle', 'idle'], [null, 0.5, null, null, null, null]],
+      ['coffee', ['idle', 'working', 'idle', 'idle', 'idle', 'idle'], [null, 0.7, null, null, null, null]]
+    ];
+    rows.forEach(function (row, r) {
+      var y = 70 + r * 0;
+    });
+    rows.forEach(function (row, c) {
+      var x = 30 + c * 220;
+      label(ctx, row[0], x + 90, 16, '#fff');
+      row[1].forEach(function (s, i) {
+        var col = i % 2, rr = Math.floor(i / 2), xx = x + col * 100, yy = 80 + rr * 160;
+        if (row[0] === 'compiler' || i < 4 || row[0] === 'deploy') {
+          A.drawStation(ctx, { type: row[0], theme: 'openspace', state: s, progress: row[2][i], highlight: (i === 0 && c % 2 === 0) }, xx, yy, 64, t);
+          if (s === 'fire') A.drawFire(ctx, xx, yy, 64, 0.9, t);
+          label(ctx, s + (row[2][i] != null ? ' ' + row[2][i] : '') + (i === 0 && c % 2 === 0 ? ' +hl' : ''), xx + 32, yy + 100, '#fff');
+        }
+      });
+    });
+    // cintas en 4 direcciones
+    ['right', 'left', 'up', 'down'].forEach(function (d, i) {
+      A.drawStation(ctx, { type: 'conveyor', theme: 'datacenter', dir: d }, 1330 - 64, 60 + i * 110, 64, t);
+      label(ctx, 'conveyor ' + d, 1330 - 32, 160 + i * 110, '#fff');
+    });
+  });
+
+  section('items', 'Items por kind/lane (escala 1, 1.5 y 3)', 1400, 620, function (ctx, t) {
+    var kinds = ['spec', 'code', 'build', 'tested', 'burnt'];
+    var lanes = ['front', 'back', 'data'];
+    ctx.fillStyle = '#e3ad72'; ctx.fillRect(0, 0, 1400, 620);
+    kinds.forEach(function (k, r) {
+      lanes.forEach(function (l, c) {
+        var x = 60 + c * 70, y = 50 + r * 64;
+        A.drawItem(ctx, { kind: k, lane: l }, x, y, 1, t);
+        if (r === 0) label(ctx, l, x, 14, '#3a2010');
+      });
+      label(ctx, k, 270, 50 + r * 64, '#3a2010');
+      lanes.forEach(function (l, c) { A.drawItem(ctx, { kind: k, lane: l }, 330 + c * 80, 50 + r * 64, 1.5, t); });
+    });
+    var prs = [[], ['front'], ['back', 'data'], ['front', 'back', 'data']];
+    prs.forEach(function (cc, i) {
+      A.drawItem(ctx, { kind: 'pr', contents: cc }, 620 + i * 80, 60, 1.5, t);
+      label(ctx, 'pr [' + cc.join(',') + ']', 620 + i * 80, 110, '#3a2010');
+    });
+    A.drawItem(ctx, { kind: 'pr_dirty', contents: [] }, 620, 170, 1.5, t); label(ctx, 'pr_dirty', 620, 220, '#3a2010');
+    A.drawItem(ctx, { kind: 'extinguisher' }, 700, 170, 1.5, t); label(ctx, 'extinguisher', 700, 220, '#3a2010');
+    A.drawItem(ctx, { kind: 'pr', contents: ['front', 'data'] }, 780, 170, 1, t);
+    A.drawItem(ctx, {}, 860, 170, 1, t); label(ctx, '{} vacío', 860, 220, '#3a2010');
+    // escala 3
+    ['spec', 'code', 'build', 'tested', 'burnt'].forEach(function (k, i) { A.drawItem(ctx, { kind: k, lane: ['front', 'back', 'data', 'front', 'back'][i] }, 80 + i * 140, 480, 3, t); });
+    A.drawItem(ctx, { kind: 'pr', contents: ['front', 'back', 'data'] }, 800, 480, 3, t);
+    A.drawItem(ctx, { kind: 'pr_dirty' }, 960, 480, 3, t);
+    A.drawItem(ctx, { kind: 'extinguisher' }, 1110, 480, 3, t);
+    // items sobre estaciones
+    A.drawStation(ctx, { type: 'counter', theme: 'garage' }, 1000, 60, 64, t); A.drawItem(ctx, { kind: 'tested', lane: 'data' }, 1032, 88, 1, t);
+    A.drawStation(ctx, { type: 'desk', theme: 'garage', state: 'working', progress: 0.5 }, 1080, 60, 64, t); A.drawItem(ctx, { kind: 'spec', lane: 'front' }, 1112, 98, 1, t);
+    A.drawStation(ctx, { type: 'compiler', theme: 'garage', state: 'working', progress: 0.3 }, 1160, 60, 64, t); A.drawItem(ctx, { kind: 'code', lane: 'back' }, 1192, 104, 1, t);
+    A.drawStation(ctx, { type: 'pr_stack', theme: 'garage' }, 1240, 60, 64, t); A.drawItem(ctx, { kind: 'pr', contents: ['back'] }, 1272, 84, 1, t);
+  });
+
+  section('chars', 'Personajes: colores × peinados, acciones, direcciones, energía', 1400, 760, function (ctx, t) {
+    ctx.fillStyle = A.theme('openspace').floor; ctx.fillRect(0, 0, 1400, 760);
+    for (var c = 0; c < 4; c++) for (var h = 0; h < 4; h++) {
+      A.drawCharacter(ctx, { x: 50 + (c * 4 + h) * 70, y: 100, dir: { x: 0, y: 1 }, colorIndex: c, hair: h, energy: 1 }, t + c + h);
+    }
+    var acts = ['none', 'typing', 'testing', 'spraying', 'drinking', 'reviewing', 'stunned', 'squashing'];
+    acts.forEach(function (a, i) {
+      A.drawCharacter(ctx, { x: 60 + i * 100, y: 240, dir: { x: 0, y: 1 }, colorIndex: i % 4, hair: (i + 1) % 4, action: a, energy: 1 }, t);
+      label(ctx, a, 60 + i * 100, 262, '#fff');
+      A.drawCharacter(ctx, { x: 60 + i * 100, y: 350, dir: { x: 1, y: 0 }, colorIndex: i % 4, hair: (i + 2) % 4, action: a, energy: 1 }, t);
+    });
+    A.drawCharacter(ctx, { x: 900, y: 240, dir: { x: 0, y: 1 }, colorIndex: 0, hair: 0, carrying: true }, t); A.drawItem(ctx, { kind: 'build', lane: 'front' }, A.getCarryPoint({ x: 900, y: 240, dir: { x: 0, y: 1 } }).x, A.getCarryPoint({ x: 900, y: 240, dir: { x: 0, y: 1 } }).y, 0.8, t);
+    label(ctx, 'carrying', 900, 262, '#fff');
+    var cp = A.getCarryPoint({ x: 1000, y: 350, dir: { x: 1, y: 0 } });
+    A.drawCharacter(ctx, { x: 1000, y: 350, dir: { x: 1, y: 0 }, colorIndex: 1, hair: 1, carrying: true }, t); A.drawItem(ctx, { kind: 'pr', contents: ['front', 'back'] }, cp.x, cp.y, 0.8, t);
+    var dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+    for (var d = 0; d < 4; d++) for (var w = 0; w < 3; w++) {
+      var x = 60 + (d * 3 + w) * 95;
+      A.drawCharacter(ctx, { x: x, y: 480, dir: { x: dirs[d][0], y: dirs[d][1] }, colorIndex: d, hair: d, moving: true, walkPhase: w * 1.05, energy: 1, name: w === 0 ? 'P' + (d + 1) : null }, t);
+    }
+    label(ctx, 'caminando: abajo / derecha / arriba / izquierda (3 fases)', 600, 505, '#fff');
+    [[1, 'energía 1'], [0.25, '0.25 ojeras'], [0.05, '0.05 zzz'], [1, 'selected'], [1, 'dashing']].forEach(function (e, i) {
+      A.drawCharacter(ctx, { x: 80 + i * 130, y: 640, dir: { x: 0, y: 1 }, colorIndex: i % 4, hair: i % 4, energy: e[0], selected: i === 3, dashing: i === 4, name: i === 3 ? 'Ana' : null }, t);
+      label(ctx, e[1], 80 + i * 130, 665, '#fff');
+    });
+    // zoom x3 de dos personajes
+    ctx.save(); ctx.translate(820, 560); ctx.scale(2.6, 2.6);
+    A.drawCharacter(ctx, { x: 0, y: 70, dir: { x: 0, y: 1 }, colorIndex: 0, hair: 0, energy: 1 }, t);
+    A.drawCharacter(ctx, { x: 50, y: 70, dir: { x: 0.2, y: 1 }, colorIndex: 2, hair: 3, energy: 0.2, action: 'typing' }, t);
+    A.drawCharacter(ctx, { x: 100, y: 70, dir: { x: 1, y: 0 }, colorIndex: 1, hair: 1, energy: 1, action: 'drinking' }, t);
+    A.drawCharacter(ctx, { x: 150, y: 70, dir: { x: 0, y: 1 }, colorIndex: 3, hair: 2, energy: 1, action: 'stunned' }, t);
+    A.drawCharacter(ctx, { x: 200, y: 70, dir: { x: 0, y: -1 }, colorIndex: 3, hair: 1, energy: 1 }, t);
+    ctx.restore();
+  });
+
+  section('misc', 'Bugs, manager, fuego, cohete', 1400, 520, function (ctx, t) {
+    ctx.fillStyle = A.theme('consulting').floor; ctx.fillRect(0, 0, 1400, 520);
+    for (var i = 0; i < 6; i++) A.drawBug(ctx, { x: 50 + i * 60, y: 60, angle: i * 1.05, phase: t * 18 + i }, t);
+    [0, 0.2, 0.5, 1].forEach(function (s, i) { A.drawBug(ctx, { x: 420 + i * 70, y: 60, angle: 0.3, squashed: s }, t); label(ctx, 'squash ' + s, 420 + i * 70, 100, '#fff'); });
+    ctx.save(); ctx.translate(720, -40); ctx.scale(3, 3); A.drawBug(ctx, { x: 30, y: 40, angle: -0.4, phase: t * 18 }, t); A.drawBug(ctx, { x: 80, y: 40, angle: 0, squashed: 1 }, t); ctx.restore();
+    A.drawManager(ctx, { x: 80, y: 300, dir: { x: 0, y: 1 }, talking: true, text: '¿Tienes 5 minutitos?' }, t);
+    A.drawManager(ctx, { x: 260, y: 300, dir: { x: 1, y: 0 }, moving: true, walkPhase: t * 8 }, t);
+    A.drawManager(ctx, { x: 360, y: 300, dir: { x: 0, y: -1 }, moving: true, walkPhase: 1 }, t);
+    ctx.save(); ctx.translate(380, 160); ctx.scale(2.2, 2.2); A.drawManager(ctx, { x: 40, y: 100, dir: { x: 0, y: 1 }, talking: true, text: 'Alinea las sinergias' }, t); ctx.restore();
+    [0.2, 0.5, 0.8, 1].forEach(function (I, i) {
+      A.drawStation(ctx, { type: 'counter', theme: 'consulting', state: 'fire' }, 620 + i * 80, 380, 64, t);
+      A.drawFire(ctx, 620 + i * 80, 380, 64, I, t + i);
+      label(ctx, 'fire ' + I, 652 + i * 80, 480, '#fff');
+    });
+    [0, 0.1, 0.35, 0.7].forEach(function (p, i) { A.drawRocket(ctx, 980 + i * 100, 500, t, p); label(ctx, 'rocket ' + p, 980 + i * 100, 515, '#fff'); });
+  });
+
+  section('ui', 'UI: tarjetas, iconos, panel, botones, barras', 1400, 560, function (ctx, t) {
+    A.drawMenuBackground(ctx, t);
+    var orders = [
+      { name: 'Landing Page', lanes: ['front'], timeLeft: 50, timeTotal: 60 },
+      { name: 'Login', lanes: ['front', 'back'], timeLeft: 30, timeTotal: 60 },
+      { name: 'App Full-Stack', lanes: ['front', 'back', 'data'], timeLeft: 10, timeTotal: 70 },
+      { name: 'Migración BD', lanes: ['data'], timeLeft: 40, timeTotal: 60, flash: 0.7 },
+      { name: 'Microservicio', lanes: ['back', 'data'], timeLeft: 55, timeTotal: 60, entering: 0.6 }
+    ];
+    orders.forEach(function (o, i) { A.drawOrderCard(ctx, o, 16 + i * 186, 14, 176, 100, t); });
+    A.drawOrderCard(ctx, { name: 'Dashboard', lanes: ['front', 'data'], timeLeft: 20, timeTotal: 60 }, 960, 14, 130, 84, t);
+    A.drawOrderCard(ctx, {}, 1100, 14, 130, 84, t);
+    var icons = ['front', 'back', 'data', 'coffee', 'star', 'star_empty', 'clock', 'coin', 'bug', 'fire', 'rocket', 'key', 'nope'];
+    icons.forEach(function (n, i) { A.drawIcon(ctx, n, 40 + i * 64, 170, 36); label(ctx, n, 40 + i * 64, 205, '#fff'); A.drawIcon(ctx, n, 900 + i * 26, 170, 16); });
+    A.drawPanel(ctx, 30, 240, 420, 280, { title: 'Pausa' });
+    A.drawButton(ctx, 80, 310, 320, 52, 'Continuar', true, t);
+    A.drawButton(ctx, 80, 380, 320, 52, 'Reiniciar nivel', false, t);
+    A.drawButton(ctx, 80, 450, 320, 52, 'Salir al menú', false, t);
+    A.drawPanel(ctx, 480, 240, 380, 280, { glow: true });
+    A.drawText(ctx, '¡Nivel completado!', 670, 280, { size: 26, color: '#ffd23f', outline: '#3a1060' });
+    A.drawStars(ctx, 670, 350, 2, 44, t);
+    A.drawText(ctx, 'Puntuación: 1.240', 670, 420, { size: 20 });
+    [0, 0.3, 0.7, 1].forEach(function (p, i) { A.drawProgressBar(ctx, 560 + i * 80, 480, 60, p, ['#3ddc84', '#4da3ff', '#ffb02e', '#ff4f6d'][i]); });
+    A.drawPanel(ctx, 890, 240, 480, 280, { title: 'Ajustes', accent: '#4da3ff', color: '#16304a' });
+    A.drawButton(ctx, 930, 320, 400, 46, 'Música: 80%', false, t);
+    A.drawButton(ctx, 930, 380, 400, 46, 'Efectos: 100%', true, t + 0.5);
+  });
+
+  section('menu', 'Menú principal (1280×720)', 1280, 720, function (ctx, t) {
+    A.drawMenuBackground(ctx, t);
+    A.drawLogo(ctx, 640, 210, 1.2, t);
+    ['Jugar (1 jugador)', 'Co-op local (2 jugadores)', 'Opciones', 'Créditos'].forEach(function (s, i) {
+      A.drawButton(ctx, 470, 380 + i * 66, 340, 52, s, i === 0, t);
+    });
+  });
+
+  // ---------------------------------------------------------------- escena
+  var MAPS = {
+    a: [
+      'WWWWWWWWWWWWWWWWWW',
+      'W1..cDDc..CC..T.pW',
+      'W2..............rW',
+      'W3..cccc..BB..cc.W',
+      'Wc..............KW',
+      'WP..CCcc..>>>>.c.W',
+       'WP..............RW',
+      'Wcc.X..ccDD..cc.EW',
+      'WWWWWWWWWWWWWWWWWW'
+    ]
+  };
+  var CODES = { W: 'wall', '1': 'spec_front', '2': 'spec_back', '3': 'spec_data', c: 'counter', D: 'desk', C: 'compiler', T: 'testbench', p: 'plant', r: 'server_rack', B: 'testbench', K: 'coffee', P: 'pr_stack', '>': 'conveyor', R: 'review', X: 'trash', E: 'deploy' };
+  function scene(ctx, theme, t, dark) {
+    A.drawBackground(ctx, theme, t);
+    A.drawFloor(ctx, theme, 18, 9, 64, 128, 64, t);
+    var map = MAPS.a, ox = 64, oy = 128;
+    var chars = [
+      { x: ox + 5.5 * 64, y: oy + 2.85 * 64, dir: { x: 0, y: -1 }, colorIndex: 0, hair: 0, action: 'typing', energy: 0.8, name: 'P1', selected: true },
+      { x: ox + 11.3 * 64, y: oy + 4.6 * 64, dir: { x: 1, y: 0.2 }, colorIndex: 1, hair: 1, moving: true, walkPhase: t * 10, carrying: true, energy: 0.25, name: 'P2', item: { kind: 'tested', lane: 'back' } },
+      { x: ox + 15.2 * 64, y: oy + 4.8 * 64, dir: { x: 1, y: 0 }, colorIndex: 2, hair: 3, action: 'drinking', energy: 0.05 },
+      { x: ox + 7.5 * 64, y: oy + 6.85 * 64, dir: { x: 0, y: -1 }, colorIndex: 3, hair: 2, action: 'spraying', energy: 1 }
+    ];
+    var mgr = { x: ox + 2.5 * 64, y: oy + 4.9 * 64, dir: { x: 1, y: 0 }, talking: true, text: '¿Tienes 5 minutitos?' };
+    var items = { '1,4': { kind: 'build', lane: 'front' }, '3,5': { kind: 'code', lane: 'data' }, '5,1': { kind: 'pr', contents: ['front'] }, '5,4': { kind: 'tested', lane: 'front' }, '7,15': { kind: 'pr_dirty' }, '3,14': { kind: 'extinguisher' }, '5,11': { kind: 'spec', lane: 'back' } };
+    for (var r = 0; r < 9; r++) {
+      for (var c = 0; c < 18; c++) {
+        var ch = map[r][c], ty = CODES[ch]; if (!ty) continue;
+        var st = { type: ty, theme: theme, state: 'idle', dir: 'right' };
+        if (ty === 'desk' && c === 6) { st.state = 'working'; st.progress = 0.6; st.highlight = true; }
+        if (ty === 'compiler' && r === 1 && c === 10) { st.state = 'working'; st.progress = 0.4; }
+        if (ty === 'compiler' && r === 1 && c === 11) { st.state = 'warning'; }
+        if (ty === 'compiler' && r === 5) { st.state = c === 4 ? 'fire' : 'done'; }
+        if (ty === 'testbench' && r === 3 && c === 10) { st.state = 'blocked'; }
+        A.drawStation(ctx, st, ox + c * 64, oy + r * 64, 64, t);
+        if (st.state === 'fire') A.drawFire(ctx, ox + c * 64, oy + r * 64, 64, 0.8, t);
+        var it = items[r + ',' + c];
+        if (it) { var an = A.itemAnchor(ty, 64); A.drawItem(ctx, it, ox + c * 64 + an.x, oy + r * 64 + an.y, 1, t); }
+      }
+      chars.forEach(function (p) {
+        if (p.y >= oy + r * 64 && p.y < oy + (r + 1) * 64) {
+          A.drawCharacter(ctx, p, t);
+          if (p.carrying && p.item) { var cp = A.getCarryPoint(p); A.drawItem(ctx, p.item, cp.x, cp.y, 0.85, t); }
+        }
+      });
+      if (mgr.y >= oy + r * 64 && mgr.y < oy + (r + 1) * 64) A.drawManager(ctx, mgr, t);
+      if (r === 3) A.drawBug(ctx, { x: ox + 10.5 * 64, y: oy + 3.4 * 64, angle: 0.4, phase: t * 18 }, t);
+      if (r === 6) A.drawBug(ctx, { x: ox + 8.6 * 64, y: oy + 6.7 * 64, angle: 0, squashed: 1 }, t);
+    }
+    FX.draw(ctx);
+    if (dark > 0) {
+      var lights = [];
+      chars.forEach(function (p, i) { lights.push({ x: p.x, y: p.y - 30, r: 130, color: A.PLAYER_COLORS[p.colorIndex] }); });
+      lights.push({ x: ox + 6.5 * 64, y: oy + 1 * 64, r: 110, color: '#5aa0ff' }, { x: ox + 4.5 * 64, y: oy + 5.4 * 64, r: 160, color: '#ff6a1f' }, { x: ox + 16.5 * 64, y: oy + 7.5 * 64, r: 120, color: '#3dffa0' });
+      A.drawLighting(ctx, lights, dark);
+    }
+    // HUD de ejemplo
+    [{ name: 'Login', lanes: ['front', 'back'], timeLeft: 40, timeTotal: 60 }, { name: 'App Full-Stack', lanes: ['front', 'back', 'data'], timeLeft: 12, timeTotal: 80 }, { name: 'Migración BD', lanes: ['data'], timeLeft: 50, timeTotal: 60, entering: 0.8 }].forEach(function (o, i) {
+      A.drawOrderCard(ctx, o, 70 + i * 180, 10, 170, 100, t);
+    });
+    A.drawPanel(ctx, 1060, 16, 200, 84, { radius: 14 });
+    A.drawIcon(ctx, 'coin', 1090, 42, 26); A.drawText(ctx, '1.240', 1170, 42, { size: 24, color: '#ffd23f' });
+    A.drawIcon(ctx, 'clock', 1090, 78, 22); A.drawText(ctx, '1:42', 1170, 78, { size: 20 });
+  }
+  function seedFX() {
+    FX.clear();
+    FX.spawn('glyphs', 64 + 6.5 * 64, 128 + 1 * 64, { count: 4 });
+    FX.spawn('steam', 64 + 16.5 * 64, 128 + 4 * 64, { count: 3 });
+    FX.spawn('sparks', 64 + 4.5 * 64, 128 + 5.3 * 64, { count: 12 });
+    FX.spawn('text', 64 + 9 * 64, 128 + 6 * 64, { text: '+120', color: '#ffd23f' });
+    FX.spawn('zzz', 64 + 15.3 * 64, 128 + 4 * 64);
+    for (var i = 0; i < 20; i++) FX.update(0.016);
+  }
+  if (Q.theme || SEC === 'scene') {
+    var th = Q.theme || 'openspace';
+    section('scene', 'Escena de ejemplo: ' + th, 1280, 720, function (ctx, t) { scene(ctx, th, t, +(Q.dark || 0)); });
+  }
+  if (SEC === 'scenes' || SEC === 'all') {
+    THEMES.forEach(function (th) { section('scenes', 'Escena: ' + th, 1280, 720, function (ctx, t) { scene(ctx, th, t, th === 'deploy' ? 0.75 : th === 'datacenter' ? 0.35 : 0); }); });
+  }
+
+  section('fx', 'FX: partículas (instante)', 1280, 300, function (ctx, t) {
+    ctx.fillStyle = '#2c3a4a'; ctx.fillRect(0, 0, 1280, 300);
+    if (!ctx.__fxSeeded) {
+      FX.clear();
+      ['sparks', 'smoke', 'confetti', 'glyphs', 'steam', 'coins', 'foam', 'zzz', 'dust', 'text'].forEach(function (k, i) {
+        FX.spawn(k, 70 + i * 120, 200, { text: k === 'text' ? '¡Deploy!' : undefined, color: k === 'text' ? '#3ddc84' : undefined, dir: { x: 1, y: 0 }, count: k === 'zzz' ? 3 : undefined });
+      });
+      for (var i = 0; i < 18; i++) FX.update(0.016);
+    }
+    FX.draw(ctx);
+    ['sparks', 'smoke', 'confetti', 'glyphs', 'steam', 'coins', 'foam', 'zzz', 'dust', 'text'].forEach(function (k, i) { label(ctx, k, 70 + i * 120, 280, '#fff'); });
+  });
+
+  var canvases = [];
+  sections.forEach(function (s) {
+    if (SEC !== 'all' && s.id !== SEC) return;
+    if (SEC === 'all' && s.id === 'scene') return;
+    var h2 = document.createElement('h2'); h2.textContent = s.title; document.body.appendChild(h2);
+    var c = document.createElement('canvas'); c.width = s.w * Z; c.height = s.h * Z; document.body.appendChild(c);
+    canvases.push({ s: s, c: c, g: c.getContext('2d') });
+  });
+  function frame(t) {
+    canvases.forEach(function (o) {
+      var g = o.g; g.setTransform(Z, 0, 0, Z, 0, 0); g.clearRect(0, 0, o.s.w, o.s.h);
+      if (o.s.id === 'scenes' || o.s.id === 'scene') seedFX();
+      try { o.s.draw(g, t); } catch (e) { window.onerror(e.message + ' [' + o.s.id + ']', e.stack && e.stack.split('\n')[1], 0, 0, e); }
+    });
+  }
+  var t0 = performance.now();
+  if (ANIM) {
+    (function loop() { var t = (performance.now() - t0) / 1000 + T0; frame(t); requestAnimationFrame(loop); })();
+  } else frame(T0);
+  // perf: medir N estaciones
+  if (Q.perf) {
+    var pc = A.canvas(1280, 720), pg = pc.getContext('2d'), n = 0, tt = performance.now();
+    for (var f = 0; f < 60; f++) {
+      A.drawBackground(pg, 'openspace', f / 60); A.drawFloor(pg, 'openspace', 18, 9, 64, 128, 64, f / 60);
+      for (var k = 0; k < 162; k++) A.drawStation(pg, { type: TYPES[k % TYPES.length], theme: 'openspace' }, 64 + (k % 18) * 64, 128 + Math.floor(k / 18) * 64, 64, f / 60);
+      for (var q = 0; q < 4; q++) A.drawCharacter(pg, { x: 300 + q * 100, y: 400, colorIndex: q, moving: true }, f / 60);
+    }
+    document.title = 'PERF ms/frame=' + ((performance.now() - tt) / 60).toFixed(2);
+  }
+  if (Q.sceneperf) {
+    var sc = A.canvas(1280, 720), sg = sc.getContext('2d'), t1 = performance.now();
+    for (var fr = 0; fr < 60; fr++) { scene(sg, Q.theme || 'deploy', fr / 60, +(Q.dark || 0)); sg.getImageData(0, 0, 1, 1); }
+    document.title = 'SCENEPERF ms/frame=' + ((performance.now() - t1) / 60).toFixed(2);
+  }
+  if (!window.__errors.length && document.title.indexOf('PERF') < 0) document.title = document.title.indexOf('PERF') === 0 ? document.title : 'OK';
+})();
+</script>
+</body>
+</html>

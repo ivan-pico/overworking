@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OVERWORKING · Banco de pruebas de audio</title>
+<style>
+  body { margin: 0; padding: 20px; background: #1d1f2b; color: #eef; font: 14px/1.4 system-ui, sans-serif; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  h2 { margin: 22px 0 8px; font-size: 15px; color: #9fb4ff; text-transform: uppercase; letter-spacing: .08em; }
+  p { margin: 0 0 12px; color: #aab; }
+  .grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { background: #2e3350; color: #fff; border: 1px solid #4a5280; border-radius: 6px; padding: 7px 12px; cursor: pointer; font: inherit; }
+  button:hover { background: #3b4270; }
+  button.on { background: #3ddc84; color: #10291b; border-color: #3ddc84; }
+  .row { display: flex; align-items: center; gap: 12px; margin: 8px 0; flex-wrap: wrap; }
+  input[type=range] { width: 220px; }
+  #log { margin-top: 18px; font: 12px monospace; color: #8a8; white-space: pre-wrap; max-height: 160px; overflow: auto; }
+</style>
+</head>
+<body>
+<h1>OVERWORKING · Audio</h1>
+<p>Todo sintetizado con WebAudio. Pulsa cualquier botón (el primer clic inicializa el AudioContext).</p>
+
+<h2>Música</h2>
+<div class="grid" id="tracks"></div>
+<div class="row">
+  <button id="stop">Parar música</button>
+  <label>Intensidad <input id="int" type="range" min="0" max="1" step="0.01" value="0"> <span id="intv">0.00</span></label>
+</div>
+<div class="row">
+  <label>Música <input id="mv" type="range" min="0" max="1" step="0.01" value="0.6"></label>
+  <label>SFX <input id="sv" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+  <label><input id="mute" type="checkbox"> Silenciar</label>
+</div>
+
+<h2>Efectos</h2>
+<div class="grid" id="sfx"></div>
+<div class="row">
+  <button id="typing">Ráfaga de tecleo (40 llamadas)</button>
+</div>
+<div id="log"></div>
+
+<script src="../js/audio.js"></script>
+<script>
+(function () {
+  var SFX = ['pickup', 'drop', 'type', 'compile_start', 'compile_done', 'warning', 'fire', 'extinguish', 'test_ok',
+    'bug_spawn', 'squash', 'deliver', 'order_new', 'order_fail', 'wrong', 'coffee', 'dash', 'ui_move', 'ui_select',
+    'ui_back', 'countdown', 'go', 'timeup', 'star', 'manager', 'stun', 'trash', 'review_done', 'blackout', 'conveyor'];
+  var TRACKS = ['menu', 'garage', 'openspace', 'consulting', 'datacenter', 'deploy', 'results'];
+  var A = OW.Audio, logEl = document.getElementById('log');
+  function log(s) { logEl.textContent = s + '\n' + logEl.textContent; }
+
+  var tWrap = document.getElementById('tracks'), sWrap = document.getElementById('sfx');
+  TRACKS.forEach(function (t) {
+    var b = document.createElement('button'); b.textContent = t;
+    b.onclick = function () {
+      A.init(); A.startMusic(t);
+      [].forEach.call(tWrap.children, function (c) { c.classList.remove('on'); });
+      b.classList.add('on'); log('música: ' + t);
+    };
+    tWrap.appendChild(b);
+  });
+  SFX.forEach(function (n) {
+    var b = document.createElement('button'); b.textContent = n;
+    b.onclick = function () { A.init(); A.play(n); log('sfx: ' + n); };
+    sWrap.appendChild(b);
+  });
+  document.getElementById('stop').onclick = function () {
+    A.stopMusic(); [].forEach.call(tWrap.children, function (c) { c.classList.remove('on'); });
+  };
+  var it = document.getElementById('int'), iv = document.getElementById('intv');
+  it.oninput = function () { A.setIntensity(+it.value); iv.textContent = (+it.value).toFixed(2); };
+  var mv = document.getElementById('mv'), sv = document.getElementById('sv');
+  mv.oninput = sv.oninput = function () { A.setVolume(+mv.value, +sv.value); };
+  document.getElementById('mute').onchange = function (e) { A.mute(e.target.checked); };
+  document.getElementById('typing').onclick = function () {
+    A.init();
+    for (var i = 0; i < 40; i++) setTimeout(function () { A.play('type'); }, i * 45 + Math.random() * 20);
+  };
+})();
+</script>
+</body>
+</html>

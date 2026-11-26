@@ -1,0 +1,100 @@
+# OVERWORKING
+
+Co-op caótico tipo "cocina frenética" ambientado en una oficina de programadores. Los "platos" son
+*features* que piden los clientes: hay que coger specs, programarlas, compilarlas, testearlas, meterlas
+en un Pull Request y desplegarlas antes de que caduque el ticket. Todo ello mientras arden servidores,
+se escapan bugs y el manager pregunta si tienes "5 minutitos".
+
+HTML5 Canvas + JavaScript vanilla. No necesita build, ni dependencias, ni servidor: todos los gráficos
+y el audio se generan por código.
+
+## Cómo jugar
+
+Abre `index.html` en un navegador moderno (Chrome, Firefox, Edge): basta con hacer doble clic.
+El audio se activa al pulsar la primera tecla.
+
+- **1 jugador**: manejas a dos devs y alternas entre ellos con `Tab` (o `Y` en el mando).
+- **2 jugadores**: co-op local en el mismo teclado o con mandos.
+
+## Controles
+
+| Acción | Jugador 1 | Jugador 2 | Mando |
+|---|---|---|---|
+| Mover | `W A S D` | Flechas | Stick / cruceta |
+| Coger / dejar | `E` | `.` (punto) | A |
+| Acción (mantener) | `F` | `,` (coma) | X |
+| Dash | `Shift` izq. | `-` / `/` | B |
+| Cambiar de dev (solo) | `Tab` | `Tab` | Y |
+| Pausa | `Esc` / `P` | `Esc` / `P` | Start |
+| Silenciar | `M` | `M` | — |
+
+Los menús se manejan con flechas/WASD + `Enter`, con el ratón o con el mando.
+
+## Mecánicas
+
+1. **Impresoras de specs** (azul = front, verde = back, ámbar = datos): coge una spec.
+2. **Escritorio**: deja la spec y mantén *Acción* ~2,5 s → código.
+3. **Servidor de build**: deja el código; compila solo en 4 s. Si no recoges el build a tiempo empieza
+   a pitar y acaba en **SEGFAULT**: el servidor arde y el fuego se propaga. Apágalo con el extintor
+   **HOTFIX** manteniendo *Acción* mientras miras al fuego. Lo quemado sólo va a la papelera.
+4. **Banco de tests**: deja el build y mantén *Acción* 1,5 s → módulo testeado. A veces se escapa un **bug**
+   que se posa sobre las estaciones y las bloquea: aplástalo con *Acción* (manos vacías).
+5. **Pull Request**: coge una carpeta de la pila de PRs y mete un módulo testeado de cada carril que
+   pida el ticket (puedes dejar el PR en una encimera e ir añadiendo módulos).
+6. **Deploy**: deja el PR en la plataforma. Si coincide con un pedido → cohete, confeti y dinero
+   (+ propina por rapidez). Si no, se rechaza.
+7. **Code review**: 6 s después de cada deploy el PR vuelve "con comentarios" a la estación de review;
+   mantén *Acción* allí para dejarlo limpio y reutilizarlo.
+8. **Café**: la energía baja con el tiempo; con poca vas más lento y sin nada vas en modo zombi.
+   Mantén *Acción* en la cafetera para recargar.
+9. **Papelera** (`/dev/null`) destruye lo que llevas (si es un PR, lo vacía). **Encimeras**: superficie libre.
+
+Recetas: Landing Page [front], API REST [back], Migración BD [datos], Login [front+back],
+Dashboard [front+datos], Microservicio [back+datos], App Full-Stack [front+back+datos].
+
+Cada pedido caducado resta 30 €. Las estrellas (1–3) dependen de la puntuación; en modo 1 jugador
+los umbrales son un 70 % de los de 2 jugadores. Con al menos 1 estrella se desbloquea el siguiente
+nivel. El progreso se guarda en `localStorage`.
+
+## Niveles
+
+| # | Nivel | Novedad |
+|---|---|---|
+| 1 | El Garaje | Tutorial guiado; front y back, sin peligros |
+| 2 | Startup Open Space | Tres carriles y bugs |
+| 3 | La Consultora | El manager y sus "5 minutitos" (el dash lo esquiva) |
+| 4 | El Datacenter | Cintas transportadoras, servidores que se recalientan antes, luz tenue |
+| 5 | Viernes 17:59 · Deploy Day | Todo a la vez + apagones |
+
+## Estructura
+
+```
+index.html              punto de entrada (scripts clásicos, sin módulos: funciona con file://)
+css/style.css           letterbox del lienzo 1280×720
+js/audio.js             OW.Audio: música chiptune y SFX sintetizados con WebAudio
+js/art/                 OW.Art / OW.FX: todo el dibujo procedural
+  art.js                utilidades, temas, fondos, suelos, iluminación, barras de progreso
+  characters.js         devs, bugs, manager, bocadillos
+  stations.js           estaciones de trabajo y cohete
+  items.js              specs, código, builds, módulos, PRs, extintor
+  fx.js                 partículas (chispas, humo, confeti, glifos, monedas, espuma, texto flotante...)
+  ui.js                 paneles, botones, tarjetas de pedido, iconos, logo, fondo de menú
+js/core/                lógica del juego
+  fallbacks.js          sustitutos mínimos si falta ART o AUDIO
+  config.js             constantes, utilidades, guardado
+  input.js              teclado (event.code), mandos (Gamepad API) y ratón
+  levels.js             recetas, mapas 18×9 y parámetros de cada nivel
+  entities.js           jugadores, bugs y manager
+  game.js               partida: estaciones, pipeline, pedidos, peligros, dibujado del mundo
+  hud.js                HUD de partida
+  menus.js              pantallas: título, menú, opciones, controles, créditos, selector, pausa, resultados
+  main.js               bucle principal (paso fijo 60 Hz) y ganchos de depuración
+tools/                  galería de arte y banco de pruebas de audio
+```
+
+### Depuración
+
+- `index.html?level=3&players=2&skipintro=1` arranca directamente un nivel.
+- `index.html?screen=levels` (o `menu`, `options`, `controls`, `credits`) abre una pantalla.
+- En consola: `OW.debug.state()`, `OW.debug.startLevel(n, jugadores)`, `OW.debug.skipTime(s)`,
+  `OW.debug.unlockAll()`...

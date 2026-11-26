@@ -1,0 +1,6 @@
+js/art/art.js
+js/art/characters.js
+js/art/stations.js
+js/art/items.js
+js/art/fx.js
+js/art/ui.js
