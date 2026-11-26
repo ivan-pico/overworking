@@ -64,10 +64,10 @@
     return 1;
   };
   Player.prototype.update = function (dt, ctl, game) {
-    this.energy = Math.max(0, this.energy - dt / 90);
+    this.energy = Math.max(0, this.energy - dt * OW.difficulty().drain / 90);
     if (this.immune > 0) this.immune -= dt;
     if (this.dashCd > 0) this.dashCd -= dt;
-    var MAX = 250 * this.speedMul(), ACC = 2400, FRICTION = 2800;
+    var MAX = 287.5 * this.speedMul(), ACC = 2400, FRICTION = 2800;
 
     if (this.stun > 0) {
       this.stun -= dt;
@@ -190,7 +190,7 @@
         if (!target || this.timer <= 0) { this.leave(); break; }
         this.repath -= dt;
         if (this.repath <= 0 || !this.path) { this.repath = 0.4; this.path = game.findPath(this.x, this.y, target.x, target.y); }
-        this.walk(dt, 120, target);
+        this.walk(dt, 120 * OW.difficulty().boss, target);
         var d = U.dist(this.x, this.y, target.x, target.y);
         if (d < 34 && target.stun <= 0 && target.immune <= 0) {
           if (target.dashing()) {
@@ -230,7 +230,7 @@
         var hx = C.OX + this.homeCol * C.TILE + C.TILE / 2, hy = C.OY + this.homeRow * C.TILE + C.TILE / 2 + 10;
         this.repath -= dt;
         if (this.repath <= 0 || !this.path) { this.repath = 0.8; this.path = game.findPath(this.x, this.y, hx, hy); }
-        this.walk(dt, 100, { x: hx, y: hy });
+        this.walk(dt, 100 * OW.difficulty().boss, { x: hx, y: hy });
         if (U.dist(this.x, this.y, hx, hy) < 12) { this.state = 'away'; this.timer = U.rand(16, 24); this.visible = false; }
         break;
       }

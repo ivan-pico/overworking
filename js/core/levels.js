@@ -135,7 +135,8 @@
   /* Umbrales de estrellas: los del nivel son para 2 jugadores; en solitario (un jugador
    * manejando dos devs con Tab) se exige un 70 %. Calibrado con un bot de QA. */
   OW.starThresholds = function (lv, players) {
-    return players === 1 ? lv.stars.map(function (v) { return Math.round(v * 0.7 / 10) * 10; }) : lv.stars.slice();
+    var f = (players === 1 ? 0.7 : 1) * OW.difficulty().stars;
+    return lv.stars.map(function (v) { return Math.round(v * f / 10) * 10; });
   };
 
   OW.HAZARD_NAMES = { bug: 'Bugs', manager: 'Manager', conveyor: 'Cintas', heat: 'Sobrecalentamiento', blackout: 'Apagones' };

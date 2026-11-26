@@ -57,10 +57,44 @@
     try { OW.FX.spawn(type, x, y, opts || {}); } catch (e) { /* silencio */ }
   };
 
+  /* Niveles de dificultad. Por defecto "Junior Optimista" (índice 1). Los valores 1 equivalen al
+   * equilibrio original del juego, que hoy sólo conserva "Rockstar 10x" (algo más duro aún).
+   * order: tiempo de los pedidos · gap: espera entre pedidos · heat: velocidad de quemado
+   * bugs: probabilidad de bug · drain: gasto de café (0 = no necesita café) · boss: velocidad del manager · stars: umbrales
+   * maxOrders: tope de pedidos simultáneos (si no se indica, el del nivel) */
+  OW.DIFFICULTIES = [
+    { name: 'Becario Feliz', desc: 'Pedidos sin prisa, sin necesidad de café y el manager de vacaciones mentales.',
+      order: 2.2, gap: 1.4, heat: 0.4, bugs: 0.15, drain: 0, boss: 0.5, stars: 0.45, maxOrders: 1, color: '#7cff9b' },
+    { name: 'Junior Optimista', desc: '"Esto lo saco en una tarde." Mucho margen para aprender.',
+      order: 1.6, gap: 1.25, heat: 0.6, bugs: 0.45, drain: 0.5, boss: 0.7, stars: 0.65, maxOrders: 2, color: '#4da3ff' },
+    { name: 'Senior Cafeinado', desc: 'Deadlines de verdad y dos cafés por hora, pero con oficio.',
+      order: 1.25, gap: 1.1, heat: 0.8, bugs: 0.75, drain: 0.8, boss: 0.85, stars: 0.85, color: '#ffd23f' },
+    { name: 'Rockstar 10x', desc: 'Deploy en viernes, sin tests y con el servidor ardiendo. Suerte.',
+      order: 0.8, gap: 0.85, heat: 1.35, bugs: 1.4, drain: 1.3, boss: 1.2, stars: 1, color: '#ff5d73' }
+  ];
+  OW.difficulty = function () {
+    var i = OW.Save && OW.Save.data.difficulty;
+    return OW.DIFFICULTIES[i] || OW.DIFFICULTIES[1];
+  };
+  /* Copia del nivel con los modificadores de dificultad aplicados. */
+  OW.applyDifficulty = function (lv) {
+    var d = OW.difficulty(), c = {};
+    for (var k in lv) if (Object.prototype.hasOwnProperty.call(lv, k)) c[k] = lv[k];
+    c.timeMul = (lv.timeMul || 1) * d.order;
+    c.orderGap = [lv.orderGap[0] * d.gap, lv.orderGap[1] * d.gap];
+    c.heat = (lv.heat || 1) * d.heat;
+    c.bugChance = Math.min(0.8, (lv.bugChance || 0) * d.bugs);
+    if (d.maxOrders) {
+      c.maxOrders = Math.min(lv.maxOrders, d.maxOrders);
+      c.startOrders = Math.min(lv.startOrders || 1, c.maxOrders);
+    }
+    return c;
+  };
+
   /* Guardado de progreso y opciones */
   var KEY = 'overworking_save_v1';
   OW.Save = {
-    data: { stars: [0, 0, 0, 0, 0], best: [0, 0, 0, 0, 0], music: 0.7, sfx: 0.8 },
+    data: { stars: [0, 0, 0, 0, 0], best: [0, 0, 0, 0, 0], music: 0.7, sfx: 0.8, difficulty: 1 },
     load: function () {
       try {
         var raw = window.localStorage.getItem(KEY);
@@ -70,6 +104,7 @@
             for (var i = 0; i < 5; i++) { this.data.stars[i] = d.stars[i] | 0; this.data.best[i] = (d.best && d.best[i]) | 0; }
             if (typeof d.music === 'number') this.data.music = U.clamp(d.music, 0, 1);
             if (typeof d.sfx === 'number') this.data.sfx = U.clamp(d.sfx, 0, 1);
+            if (typeof d.difficulty === 'number') this.data.difficulty = U.clamp(d.difficulty | 0, 0, OW.DIFFICULTIES.length - 1);
           }
         }
       } catch (e) { /* localStorage no disponible */ }

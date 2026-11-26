@@ -25,7 +25,7 @@
 
   function Game(levelIndex, numPlayers) {
     this.li = levelIndex;
-    this.level = OW.LEVELS[levelIndex];
+    this.level = OW.applyDifficulty(OW.LEVELS[levelIndex]);
     this.theme = this.level.theme;
     this.numPlayers = numPlayers;
     this.solo = numPlayers === 1;

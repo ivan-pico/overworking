@@ -59,7 +59,8 @@
       OW.Art.drawLogo(ctx, 640, 270, 1.1, t);
       U.text(ctx, 'Un co-op frenético de programadores al borde del burnout', 640, 380, { size: 22, color: '#fff', stroke: 'rgba(0,0,0,0.5)', strokeWidth: 5 });
       if (Math.sin(t * 4) > -0.3) U.text(ctx, 'Pulsa cualquier tecla', 640, 520, { size: 30, color: '#ffd23f', stroke: '#2b1b4a', strokeWidth: 7 });
-      footer(ctx, 'v1.0 · hecho con café y deadlines');
+      U.text(ctx, 'v1.0 · hecho con café y deadlines', 640, 682, { size: 15, color: 'rgba(255,255,255,0.75)' });
+      U.text(ctx, 'Gohan Project  ·  gohan.cat  ·  Ivan Picó', 640, 706, { size: 14, color: 'rgba(255,210,63,0.85)' });
     }
   };
 
@@ -100,14 +101,20 @@
       return name + '  ' + bar;
     };
   }
+  function changeDifficulty(d) {
+    var n = OW.DIFFICULTIES.length, s = OW.Save.data;
+    s.difficulty = ((s.difficulty == null ? 1 : s.difficulty) + d + n) % n;
+    OW.Save.save(); OW.sfx('ui_move');
+  }
   S.options = {
     enter: function () {
       this.list = new ButtonList([
         { label: volLabel('MÚSICA', 'music'), key: 'music', action: function () {} },
         { label: volLabel('EFECTOS', 'sfx'), key: 'sfx', action: function () {} },
+        { label: function () { return '◀  ' + OW.difficulty().name.toUpperCase() + '  ▶'; }, diff: true, action: function () {} },
         { label: 'BORRAR PROGRESO', action: function () { S.options.confirmReset(); } },
         { label: 'VOLVER', action: function () { OW.App.go('menu'); } }
-      ], 400, 230, 480, 62, 18);
+      ], 400, 200, 480, 58, 16);
       this.resetArmed = 0;
     },
     confirmReset: function () {
@@ -121,6 +128,14 @@
       this.resetArmed = Math.max(0, this.resetArmed - dt); this.msgT = Math.max(0, (this.msgT || 0) - dt);
       if (m.back) { OW.sfx('ui_back'); OW.App.go('menu'); return; }
       var it = this.list.items[this.list.focus];
+      if (it.diff && (m.left || m.right || m.confirm)) {
+        changeDifficulty(m.left ? -1 : 1);
+        m.confirm = false;
+      }
+      var I = OW.Input, dr = this.list.rects[2];
+      if (I.mouse.clicked && I.mouse.x >= dr.x && I.mouse.x <= dr.x + dr.w && I.mouse.y >= dr.y && I.mouse.y <= dr.y + dr.h) {
+        this.list.focus = 2; changeDifficulty(I.mouse.x < dr.x + dr.w / 2 ? -1 : 1); return;
+      }
       if (it.key && (m.left || m.right || m.confirm)) {
         var d = m.left ? -0.1 : 0.1, v = OW.Save.data[it.key] + d;
         if (m.confirm && v > 1.001) v = 0;
@@ -132,10 +147,18 @@
     },
     draw: function (ctx, t) {
       OW.Art.drawMenuBackground(ctx, t);
-      OW.Art.drawPanel(ctx, 340, 120, 600, 480, { title: 'OPCIONES', alpha: 0.92 });
+      OW.Art.drawPanel(ctx, 340, 120, 600, 520, { title: 'OPCIONES', alpha: 0.92 });
       this.list.draw(ctx, t);
-      if (this.msgT > 0) U.text(ctx, this.msg, 640, 580, { size: 18, color: '#ff7b7b' });
-      footer(ctx, '← → ajustar volumen · Esc volver');
+      // detalle de la dificultad
+      var D = OW.difficulty(), di = OW.DIFFICULTIES.indexOf(D);
+      U.text(ctx, 'DIFICULTAD', 628, 584, { size: 14, align: 'right', color: '#cfc6ef' });
+      for (var p = 0; p < OW.DIFFICULTIES.length; p++) {
+        ctx.fillStyle = p <= di ? D.color : 'rgba(255,255,255,0.25)';
+        U.roundRect(ctx, 642 + p * 20, 572, 15, 15, 4); ctx.fill();
+      }
+      U.text(ctx, D.desc, 640, 612, { size: 15, color: D.color, weight: 'normal' });
+      if (this.msgT > 0) U.text(ctx, this.msg, 640, 632, { size: 16, color: '#ff7b7b' });
+      footer(ctx, '← → ajustar volumen y dificultad · Esc volver');
     }
   };
 
@@ -318,6 +341,7 @@
           U.text(ctx, thr[k] + '€', 970 + k * 62 + shakeX, 621, { size: 13, align: 'center', color: '#cfc6ef' });
         }
         U.text(ctx, 'ENTER: jugar', 1100 + shakeX, 664, { size: 16, align: 'right', color: '#ff7b7b' });
+        U.text(ctx, 'Dificultad: ' + OW.difficulty().name, 180 + shakeX, 668, { size: 14, align: 'left', color: OW.difficulty().color, weight: 'normal' });
       } else {
         U.text(ctx, 'Bloqueado: consigue al menos 1 estrella en el nivel anterior', 1100 + shakeX, 664, { size: 15, align: 'right', color: '#ff7b7b' });
       }
