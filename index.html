@@ -1,35 +1,395 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" dir="ltr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OVERWORKING</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>OVERWORKING — Juego cooperativo de programadores gratis en el navegador</title>
+  <meta name="description" content="Juego co-op gratis para 1–2 jugadores en el navegador: programa, compila, testea y despliega antes de que arda el servidor. Sin instalar, con teclado o mando.">
+  <meta name="keywords" content="juego de programadores, juego cooperativo, co-op local, juego de navegador, juego gratis, HTML5, juego de oficina, deploy, bugs, pull request">
+  <meta name="author" content="Ivan Picó — Gohan Project">
+  <meta name="creator" content="Ivan Picó">
+  <meta name="publisher" content="Gohan Project">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="theme-color" content="#1a1033">
+  <meta name="color-scheme" content="dark">
+  <meta name="application-name" content="OVERWORKING">
+  <meta name="apple-mobile-web-app-title" content="OVERWORKING">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+
+  <link rel="canonical" href="https://ivan-pico.github.io/overworking/">
+  <link rel="alternate" hreflang="es" href="https://ivan-pico.github.io/overworking/">
+  <link rel="alternate" hreflang="x-default" href="https://ivan-pico.github.io/overworking/">
+  <link rel="author" href="https://gohan.cat">
+
+  <!-- Iconos y PWA -->
+  <link rel="icon" href="icons/favicon.ico" sizes="any">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="icons/favicon-16.png" type="image/png" sizes="16x16">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="OVERWORKING">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:url" content="https://ivan-pico.github.io/overworking/">
+  <meta property="og:title" content="OVERWORKING — Juego cooperativo de programadores">
+  <meta property="og:description" content="Programa, compila y despliega antes de que arda el servidor. Co-op local gratis para 1–2 jugadores en el navegador, con teclado o mando.">
+  <meta property="og:image" content="https://ivan-pico.github.io/overworking/img/og-image.png">
+  <meta property="og:image:secure_url" content="https://ivan-pico.github.io/overworking/img/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Logo de OVERWORKING sobre una partida en la oficina: dos programadores, un servidor de build en llamas y un bug escapado.">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="OVERWORKING — Juego cooperativo de programadores">
+  <meta name="twitter:description" content="Programa, compila y despliega antes de que arda el servidor. Co-op local gratis en el navegador.">
+  <meta name="twitter:image" content="https://ivan-pico.github.io/overworking/img/og-image.png">
+  <meta name="twitter:image:alt" content="Logo de OVERWORKING sobre una partida en la oficina: dos programadores, un servidor de build en llamas y un bug escapado.">
+
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- Datos estructurados (schema.org) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://ivan-pico.github.io/overworking/#website",
+        "url": "https://ivan-pico.github.io/overworking/",
+        "name": "OVERWORKING",
+        "description": "Juego cooperativo de programadores gratis en el navegador.",
+        "inLanguage": "es",
+        "author": { "@id": "https://gohan.cat/#ivan-pico" },
+        "publisher": { "@id": "https://gohan.cat/#organization" }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://ivan-pico.github.io/overworking/#webpage",
+        "url": "https://ivan-pico.github.io/overworking/",
+        "name": "OVERWORKING — Juego cooperativo de programadores gratis en el navegador",
+        "inLanguage": "es",
+        "isPartOf": { "@id": "https://ivan-pico.github.io/overworking/#website" },
+        "about": { "@id": "https://ivan-pico.github.io/overworking/#game" },
+        "mainEntity": { "@id": "https://ivan-pico.github.io/overworking/#game" },
+        "primaryImageOfPage": { "@id": "https://ivan-pico.github.io/overworking/#og-image" }
+      },
+      {
+        "@type": "Person",
+        "@id": "https://gohan.cat/#ivan-pico",
+        "name": "Ivan Picó",
+        "url": "https://gohan.cat",
+        "sameAs": ["https://github.com/ivan-pico"],
+        "affiliation": { "@id": "https://gohan.cat/#organization" }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://gohan.cat/#organization",
+        "name": "Gohan Project",
+        "url": "https://gohan.cat",
+        "founder": { "@id": "https://gohan.cat/#ivan-pico" }
+      },
+      {
+        "@type": "ImageObject",
+        "@id": "https://ivan-pico.github.io/overworking/#og-image",
+        "url": "https://ivan-pico.github.io/overworking/img/og-image.png",
+        "contentUrl": "https://ivan-pico.github.io/overworking/img/og-image.png",
+        "width": 1200,
+        "height": 630,
+        "caption": "OVERWORKING: partida cooperativa en el nivel Viernes 17:59 · Deploy Day"
+      },
+      {
+        "@type": "VideoGame",
+        "@id": "https://ivan-pico.github.io/overworking/#game",
+        "name": "OVERWORKING",
+        "alternateName": "Overworking: co-op de oficina a contrarreloj",
+        "url": "https://ivan-pico.github.io/overworking/",
+        "description": "Juego cooperativo frenético para 1 o 2 jugadores ambientado en una oficina de programadores: coge requisitos, programa, compila sin provocar un SEGFAULT, testea, aplasta bugs, junta módulos en un Pull Request y despliega a producción antes de que caduque el ticket.",
+        "image": { "@id": "https://ivan-pico.github.io/overworking/#og-image" },
+        "screenshot": { "@id": "https://ivan-pico.github.io/overworking/#og-image" },
+        "inLanguage": "es",
+        "genre": ["Cooperativo", "Party game", "Arcade", "Gestión del tiempo", "Simulación"],
+        "keywords": "juego de programadores, co-op local, juego de navegador, HTML5, bugs, deploy, pull request, café",
+        "playMode": ["https://schema.org/CoOp", "https://schema.org/SinglePlayer", "https://schema.org/MultiPlayer"],
+        "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 2 },
+        "gamePlatform": ["Navegador web", "PC", "Mac", "Linux"],
+        "applicationCategory": "GameApplication",
+        "applicationSubCategory": "Juego cooperativo local",
+        "operatingSystem": "Windows, macOS, Linux, ChromeOS (cualquier navegador moderno)",
+        "browserRequirements": "Requiere JavaScript y HTML5 Canvas. Teclado o mando compatible con la Gamepad API.",
+        "softwareVersion": "1.0",
+        "datePublished": "2026-11-26",
+        "isAccessibleForFree": true,
+        "isFamilyFriendly": true,
+        "accessMode": ["visual", "auditory"],
+        "accessibilityControl": ["fullKeyboardControl", "fullMouseControl"],
+        "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+        "author": { "@id": "https://gohan.cat/#ivan-pico" },
+        "creator": { "@id": "https://gohan.cat/#ivan-pico" },
+        "publisher": { "@id": "https://gohan.cat/#organization" },
+        "character": [
+          { "@type": "Person", "name": "Ana", "description": "Desarrolladora del jugador 1" },
+          { "@type": "Person", "name": "Leo", "description": "Desarrollador del jugador 2" }
+        ],
+        "gameLocation": [
+          { "@type": "Place", "name": "El Garaje", "description": "Nivel 1: tutorial guiado con front y back, sin peligros." },
+          { "@type": "Place", "name": "Startup Open Space", "description": "Nivel 2: tres carriles y los primeros bugs." },
+          { "@type": "Place", "name": "La Consultora", "description": "Nivel 3: el manager y sus \"5 minutitos\"." },
+          { "@type": "Place", "name": "El Datacenter", "description": "Nivel 4: cintas transportadoras y servidores que se recalientan." },
+          { "@type": "Place", "name": "Viernes 17:59 · Deploy Day", "description": "Nivel 5: todo a la vez y apagones." }
+        ],
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://ivan-pico.github.io/overworking/",
+          "category": "free"
+        },
+        "potentialAction": {
+          "@type": "PlayAction",
+          "target": "https://ivan-pico.github.io/overworking/"
+        },
+        "subjectOf": {
+          "@type": "SoftwareSourceCode",
+          "name": "Código fuente de OVERWORKING",
+          "codeRepository": "https://github.com/ivan-pico/overworking",
+          "programmingLanguage": ["JavaScript", "HTML", "CSS"],
+          "runtimePlatform": "Navegador web",
+          "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+          "author": { "@id": "https://gohan.cat/#ivan-pico" }
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Scripts clásicos en orden (defer conserva el orden y no bloquea el parseo; funciona con file://) -->
+  <!-- AUDIO -->
+  <script defer src="js/audio.js"></script>
+  <!-- ART -->
+  <script defer src="js/art/art.js"></script>
+  <script defer src="js/art/characters.js"></script>
+  <script defer src="js/art/stations.js"></script>
+  <script defer src="js/art/items.js"></script>
+  <script defer src="js/art/fx.js"></script>
+  <script defer src="js/art/ui.js"></script>
+  <!-- CORE -->
+  <script defer src="js/core/fallbacks.js"></script>
+  <script defer src="js/core/config.js"></script>
+  <script defer src="js/core/input.js"></script>
+  <script defer src="js/core/levels.js"></script>
+  <script defer src="js/core/entities.js"></script>
+  <script defer src="js/core/game.js"></script>
+  <script defer src="js/core/hud.js"></script>
+  <script defer src="js/core/menus.js"></script>
+  <script defer src="js/core/main.js"></script>
+  <!-- PÁGINA: pausa al hacer scroll fuera del juego -->
+  <script defer src="js/page.js"></script>
 </head>
 <body>
-  <div id="wrap">
-    <canvas id="game" width="1280" height="720" tabindex="0" aria-label="OVERWORKING"></canvas>
-  </div>
-  <noscript>OVERWORKING necesita JavaScript.</noscript>
+  <main>
+    <section id="juego" aria-label="Juego">
+      <canvas id="game" width="1280" height="720" tabindex="0" role="application"
+              aria-label="OVERWORKING: juego cooperativo de programadores. Se juega con teclado, ratón o mando."
+              aria-describedby="como-jugar-resumen">
+        <p>Tu navegador no puede mostrar el lienzo del juego. Más abajo tienes la descripción, los controles y los niveles de OVERWORKING.</p>
+      </canvas>
+      <noscript>
+        <div class="noscript">
+          <p><strong>OVERWORKING necesita JavaScript</strong> para funcionar. Actívalo y recarga la página para jugar.</p>
+          <p><a href="#acerca">Leer sobre el juego</a></p>
+        </div>
+      </noscript>
+    </section>
 
-  <!-- AUDIO -->
-  <script src="js/audio.js"></script>
-  <!-- ART -->
-  <script src="js/art/art.js"></script>
-  <script src="js/art/characters.js"></script>
-  <script src="js/art/stations.js"></script>
-  <script src="js/art/items.js"></script>
-  <script src="js/art/fx.js"></script>
-  <script src="js/art/ui.js"></script>
-  <!-- CORE -->
-  <script src="js/core/fallbacks.js"></script>
-  <script src="js/core/config.js"></script>
-  <script src="js/core/input.js"></script>
-  <script src="js/core/levels.js"></script>
-  <script src="js/core/entities.js"></script>
-  <script src="js/core/game.js"></script>
-  <script src="js/core/hud.js"></script>
-  <script src="js/core/menus.js"></script>
-  <script src="js/core/main.js"></script>
+    <article id="acerca" class="about" aria-labelledby="titulo">
+      <header>
+        <h1 id="titulo">OVERWORKING: el juego cooperativo de programadores al borde del <span class="hl">burnout</span></h1>
+        <p class="lead" id="como-jugar-resumen">Un co-op frenético para 1 o 2 jugadores en el que coges requisitos, programas,
+          compilas, testeas, juntas módulos en un <em>Pull Request</em> y despliegas a producción antes de que caduque el ticket.
+          Todo mientras arden los servidores, se escapan bugs y el manager pregunta si tienes «5 minutitos».</p>
+        <ul class="facts" aria-label="Datos rápidos">
+          <li>Gratis</li>
+          <li>1–2 jugadores (co-op local)</li>
+          <li>Teclado, ratón o mando</li>
+          <li>Sin instalar: se juega en el navegador</li>
+          <li>5 niveles · 4 dificultades</li>
+          <li>En español</li>
+        </ul>
+        <p><a class="play" href="#juego">▲ Volver al juego</a></p>
+      </header>
+
+      <section aria-labelledby="h-que-es">
+        <h2 id="h-que-es">¿De qué va?</h2>
+        <p>Si te gustan los juegos cooperativos de cocina caótica tipo <em>Overcooked</em>, OVERWORKING cambia los fogones
+          por una oficina de desarrollo de software. Los «platos» son <strong>features</strong> que piden los clientes:
+          una Landing Page, una API REST, un Login, un Dashboard o una App Full-Stack completa. Cada pedido necesita
+          módulos de uno o varios carriles (<strong>front</strong>, <strong>back</strong> y <strong>datos</strong>) y hay que
+          entregarlo antes de que se acabe su tiempo.</p>
+        <p>Todo el arte y la música chiptune se generan por código con HTML5 Canvas y WebAudio. No hay descargas,
+          registros ni anuncios: abres la página y juegas.</p>
+      </section>
+
+      <section aria-labelledby="h-como">
+        <h2 id="h-como">Cómo se juega</h2>
+        <p class="howto-intro">Cada pedido es una <strong>feature</strong>. Cada módulo de color recorre esta cadena de montaje:</p>
+        <ol class="howto">
+          <li class="howto-step">
+            <span class="howto-n" aria-hidden="true">1</span>
+            <img src="img/howto/paso1-impresora.webp" width="420" height="220" loading="lazy" alt="Impresora de tickets azul del carril Front con una hoja de spec saliendo; flecha hacia la hoja spec azul.">
+            <p><strong>Coge la spec</strong> en la impresora de su color con <kbd>E</kbd>.</p>
+          </li>
+          <li class="howto-step">
+            <span class="howto-n" aria-hidden="true">2</span>
+            <img src="img/howto/paso2-escritorio.webp" width="420" height="220" loading="lazy" alt="Spec azul que entra en el escritorio con monitor y teclado; se mantiene F; flecha hacia el bloque de código azul.">
+            <p><strong>Prográmala</strong> en un escritorio: déjala y mantén <kbd>F</kbd> → <em>código</em>.</p>
+          </li>
+          <li class="howto-step">
+            <span class="howto-n" aria-hidden="true">3</span>
+            <img src="img/howto/paso3-build.webp" width="420" height="220" loading="lazy" alt="Código azul que entra en el servidor de build; flecha hacia el paquete build azul. Aviso: si tardas en recogerlo se convierte en un paquete quemado SEGFAULT.">
+            <p><strong>Compílala</strong> en el servidor de build. Va sola… pero recógela a tiempo o <strong class="hot">se quema</strong>.</p>
+          </li>
+          <li class="howto-step">
+            <span class="howto-n" aria-hidden="true">4</span>
+            <img src="img/howto/paso4-tests.webp" width="420" height="220" loading="lazy" alt="Paquete build azul en el banco de tests; se mantiene F; flecha hacia el módulo testeado con un check verde.">
+            <p><strong>Pasa el QA</strong> en el banco de tests: mantén <kbd>F</kbd> → módulo testeado <span class="ok">✔</span>.</p>
+          </li>
+          <li class="howto-step">
+            <span class="howto-n" aria-hidden="true">5</span>
+            <img src="img/howto/paso5-pr.webp" width="420" height="220" loading="lazy" alt="Un módulo testeado azul más uno verde se meten en la carpeta morada de Pull Request.">
+            <p><strong>Mételo en un PR</strong>: deja los módulos testeados dentro de la carpeta morada.</p>
+          </li>
+          <li class="howto-step">
+            <span class="howto-n" aria-hidden="true">6</span>
+            <img src="img/howto/paso6-deploy.webp" width="420" height="220" loading="lazy" alt="La carpeta PR se lleva a la plataforma de lanzamiento PROD; despega un cohete y salen monedas y una estrella.">
+            <p><strong>Lleva el PR a DEPLOY</strong>: ¡cohete, monedas y pedido entregado!</p>
+          </li>
+        </ol>
+
+        <div class="prbox">
+          <h3 id="h-pr">¿Qué meto en el PR?</h3>
+          <p>Mira la tarjeta del pedido: <strong>cada chip de color es un módulo testeado</strong> que tiene que ir dentro de la carpeta.
+            Ni más ni menos, y como mucho uno de cada color.</p>
+          <div class="recipes">
+          <figure class="recipe lanes1">
+            <img src="img/howto/pr-landing.webp" width="456" height="160" loading="lazy" alt="Tarjeta del pedido Landing Page con un chip azul Front: un módulo testeado azul dentro del PR.">
+            <figcaption><strong>Landing Page</strong><span class="chips"><span class="chip f">Front</span></span>Solo <b class="tf">1 azul</b>.</figcaption>
+          </figure>
+          <figure class="recipe lanes2">
+            <img src="img/howto/pr-login.webp" width="508" height="160" loading="lazy" alt="Tarjeta del pedido Login con chips Front y Back: un módulo azul y uno verde dentro del PR.">
+            <figcaption><strong>Login</strong><span class="chips"><span class="chip f">Front</span><span class="chip b">Back</span></span><b class="tf">1 azul</b> + <b class="tb">1 verde</b>.</figcaption>
+          </figure>
+          <figure class="recipe lanes3">
+            <img src="img/howto/pr-fullstack.webp" width="560" height="160" loading="lazy" alt="Tarjeta del pedido App Full-Stack con chips Front, Back y Data: módulos azul, verde y ámbar dentro del PR.">
+            <figcaption><strong>App Full-Stack</strong><span class="chips"><span class="chip f">Front</span><span class="chip b">Back</span><span class="chip d">Data</span></span><b class="tf">azul</b> + <b class="tb">verde</b> + <b class="td">ámbar</b>.</figcaption>
+          </figure>
+          </div>
+          <h4>Otros pedidos</h4>
+          <div class="recipes recipes-more">
+          <figure class="recipe small">
+            <img src="img/howto/pr-api.webp" width="328" height="115" loading="lazy" alt="Pedido API REST: un módulo verde Back dentro del PR.">
+            <figcaption><strong>API REST</strong> <b class="tb">1 verde</b></figcaption>
+          </figure>
+          <figure class="recipe small">
+            <img src="img/howto/pr-bd.webp" width="328" height="115" loading="lazy" alt="Pedido Migración BD: un módulo ámbar Data dentro del PR.">
+            <figcaption><strong>Migración BD</strong> <b class="td">1 ámbar</b></figcaption>
+          </figure>
+          <figure class="recipe small">
+            <img src="img/howto/pr-dashboard.webp" width="366" height="115" loading="lazy" alt="Pedido Dashboard: un módulo azul y uno ámbar dentro del PR.">
+            <figcaption><strong>Dashboard</strong> <b class="tf">azul</b> + <b class="td">ámbar</b></figcaption>
+          </figure>
+          <figure class="recipe small">
+            <img src="img/howto/pr-micro.webp" width="366" height="115" loading="lazy" alt="Pedido Microservicio: un módulo verde y uno ámbar dentro del PR.">
+            <figcaption><strong>Microservicio</strong> <b class="tb">verde</b> + <b class="td">ámbar</b></figcaption>
+          </figure>
+          </div>
+        </div>
+
+        <ul class="howto-extra">
+          <li><strong>Fuego:</strong> si un build se queda en el servidor sale <strong>SEGFAULT</strong> y arde. Apágalo con el extintor <strong>HOTFIX</strong> (mantén <em>Acción</em>). Lo quemado, a la papelera.</li>
+          <li><strong>Bugs:</strong> a veces escapa uno del banco de tests y bloquea una estación: acércate con las manos vacías y aplástalo.</li>
+          <li><strong>Code review:</strong> los PR vuelven «con comentarios»; límpialos en la estación del pato de goma para reutilizarlos.</li>
+          <li><strong>Café:</strong> la energía baja con el tiempo. Sin café vas a cámara lenta; recárgala en la cafetera.</li>
+        </ul>
+        <p>Cada pedido caducado resta dinero. Consigue de 1 a 3 estrellas por nivel para desbloquear el siguiente;
+          el progreso se guarda en tu navegador.</p>
+      </section>
+
+      <section aria-labelledby="h-controles">
+        <h2 id="h-controles">Controles</h2>
+        <p>Con <strong>1 jugador</strong> manejas a dos devs y alternas entre ellos con <kbd>Tab</kbd> (o <kbd>Y</kbd> en el mando).
+          Con <strong>2 jugadores</strong> compartís teclado o usáis mandos.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>Controles por jugador</caption>
+            <thead>
+              <tr><th scope="col">Acción</th><th scope="col">Jugador 1</th><th scope="col">Jugador 2</th><th scope="col">Mando</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Mover</th><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Flechas</td><td>Stick / cruceta</td></tr>
+              <tr><th scope="row">Coger / dejar</th><td><kbd>E</kbd></td><td><kbd>.</kbd></td><td>A</td></tr>
+              <tr><th scope="row">Acción (mantener)</th><td><kbd>F</kbd></td><td><kbd>,</kbd></td><td>X</td></tr>
+              <tr><th scope="row">Dash</th><td><kbd>Shift</kbd> izq.</td><td><kbd>-</kbd> / <kbd>/</kbd></td><td>B</td></tr>
+              <tr><th scope="row">Cambiar de dev (1 jugador)</th><td><kbd>Tab</kbd></td><td><kbd>Tab</kbd></td><td>Y</td></tr>
+              <tr><th scope="row">Pausa</th><td><kbd>Esc</kbd> / <kbd>P</kbd></td><td><kbd>Esc</kbd> / <kbd>P</kbd></td><td>Start</td></tr>
+              <tr><th scope="row">Silenciar</th><td><kbd>M</kbd></td><td><kbd>M</kbd></td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Los menús se manejan con flechas o WASD y <kbd>Enter</kbd>, con el ratón o con el mando.</p>
+      </section>
+
+      <section aria-labelledby="h-niveles">
+        <h2 id="h-niveles">Niveles</h2>
+        <p>Los niveles se eligen en un selector con forma de grafo de ramas de git.</p>
+        <ol class="levels">
+          <li><h3>El Garaje</h3><p>Tu primer sprint: tutorial guiado con front y back, sin sustos.</p></li>
+          <li><h3>Startup Open Space</h3><p>Tres carriles y los primeros bugs sueltos.</p></li>
+          <li><h3>La Consultora</h3><p>Cuidado con el manager y sus «5 minutitos» (el dash lo esquiva).</p></li>
+          <li><h3>El Datacenter</h3><p>Cintas transportadoras, luz tenue y servidores que se recalientan antes.</p></li>
+          <li><h3>Viernes 17:59 · Deploy Day</h3><p>Todo a la vez. Y se va la luz.</p></li>
+        </ol>
+      </section>
+
+      <section aria-labelledby="h-dificultad">
+        <h2 id="h-dificultad">Dificultades</h2>
+        <dl class="diffs">
+          <div><dt class="d1">Becario Feliz</dt><dd>Pedidos sin prisa, sin necesidad de café y el manager de vacaciones mentales.</dd></div>
+          <div><dt class="d2">Junior Optimista</dt><dd>«Esto lo saco en una tarde». Mucho margen para aprender.</dd></div>
+          <div><dt class="d3">Senior Cafeinado</dt><dd>Deadlines de verdad y dos cafés por hora, pero con oficio.</dd></div>
+          <div><dt class="d4">Rockstar 10x</dt><dd>Deploy en viernes, sin tests y con el servidor ardiendo. Suerte.</dd></div>
+        </dl>
+      </section>
+
+      <section aria-labelledby="h-faq">
+        <h2 id="h-faq">Preguntas frecuentes</h2>
+        <h3>¿Es gratis?</h3>
+        <p>Sí. OVERWORKING es gratuito y de código abierto (licencia GPL-3.0).</p>
+        <h3>¿Hay que instalar algo?</h3>
+        <p>No. Funciona en cualquier navegador moderno (Chrome, Firefox, Edge, Safari) en ordenador.</p>
+        <h3>¿Se puede jugar online?</h3>
+        <p>El multijugador es <strong>local</strong>: dos personas en el mismo ordenador, compartiendo teclado o con mandos.</p>
+        <h3>¿Puedo jugar solo?</h3>
+        <p>Sí: en modo 1 jugador controlas a dos devs y cambias entre ellos, y los umbrales de estrellas son más bajos.</p>
+      </section>
+
+      <footer class="credits" aria-labelledby="h-creditos">
+        <h2 id="h-creditos">Créditos</h2>
+        <p>Un juego de <a href="https://gohan.cat" rel="author">Ivan Picó</a> · <a href="https://gohan.cat">Gohan Project</a>.</p>
+        <p>Código fuente en <a href="https://github.com/ivan-pico/overworking">GitHub</a> bajo licencia
+          <a href="https://www.gnu.org/licenses/gpl-3.0.html" rel="license">GPL-3.0</a>.</p>
+        <p class="small">Ningún becario fue dañado durante el desarrollo. (Bueno, uno. Pero tenía café.)</p>
+        <p><a class="play" href="#juego">▲ Volver al juego</a></p>
+      </footer>
+    </article>
+  </main>
 </body>
 </html>

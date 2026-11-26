@@ -1,17 +1,48 @@
+:root {
+  color-scheme: dark;
+  --bg: #07050f;
+  --panel: #120c26;
+  --line: rgba(255, 255, 255, 0.14);
+  --text: #e6e0ff;
+  --muted: #b9b0dc;
+  --accent: #ffd23f;
+  --link: #8cc8ff;
+  --front: #4da3ff;
+  --back: #3ddc84;
+  --data: #ffb02e;
+  --danger: #ff5d73;
+  --font: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --mono: "Consolas", "DejaVu Sans Mono", monospace;
+}
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #07050f;
+  background: var(--bg);
 }
-#wrap {
-  position: fixed;
-  inset: 0;
+html {
+  /* La página puede bajar hasta "Acerca del juego", pero sin barra visible: el juego se ve igual que antes. */
+  scrollbar-width: none;
+  overscroll-behavior: none;
+  scroll-behavior: smooth;
+}
+html::-webkit-scrollbar { display: none; }
+body {
+  overflow-x: hidden;
+  color: var(--text);
+  font-family: var(--font);
+}
+
+/* ---------- Pantalla de juego (letterbox 1280×720 a pantalla completa) ---------- */
+#juego {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   background: radial-gradient(ellipse at center, #1a1033 0%, #07050f 75%);
 }
 #game {
@@ -22,4 +53,222 @@ html, body {
   outline: none;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
   cursor: default;
+}
+.noscript {
+  position: absolute;
+  inset: auto 16px 24px 16px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(18, 12, 38, 0.95);
+  text-align: center;
+}
+
+/* ---------- Acerca del juego (contenido HTML real, bajo la pantalla de juego) ---------- */
+.about {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 48px 16px 64px;
+  line-height: 1.6;
+  font-size: 17px;
+}
+.about h1 {
+  margin: 0 0 16px;
+  font-size: clamp(28px, 5vw, 42px);
+  line-height: 1.15;
+  color: #fff;
+}
+.about h1 .hl { color: var(--accent); }
+.about h2 {
+  margin: 48px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--line);
+  font-size: 26px;
+  color: var(--accent);
+}
+.about h3 { margin: 20px 0 4px; font-size: 19px; color: #fff; }
+.about p { margin: 0 0 12px; }
+.about .lead { font-size: 19px; color: var(--text); }
+.about strong { color: #fff; }
+.about a { color: var(--link); text-underline-offset: 3px; }
+.about a:hover { color: #fff; }
+.about a:focus-visible, #game:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0;
+  padding: 0;
+  list-style: none;
+}
+.facts li {
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 15px;
+  font-weight: bold;
+}
+.play {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #c2353f, #a3204f);
+  color: #fff !important;
+  font-weight: bold;
+  text-decoration: none;
+}
+.play:hover { filter: brightness(1.1); }
+.steps { padding-left: 1.4em; }
+.steps li { margin-bottom: 8px; }
+kbd {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  background: #1d1538;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 0.85em;
+  text-align: center;
+}
+.table-wrap { overflow-x: auto; margin-bottom: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+caption { text-align: left; color: var(--muted); padding-bottom: 6px; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+thead th { color: var(--accent); }
+tbody th { font-weight: normal; color: var(--muted); }
+.levels { padding-left: 1.4em; }
+.levels li { margin-bottom: 8px; }
+.levels li::marker { color: var(--accent); font-weight: bold; }
+.levels h3 { margin: 0; }
+.diffs { margin: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.diffs div { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.diffs dt { font-weight: bold; font-size: 18px; }
+.diffs dd { margin: 4px 0 0; color: var(--text); }
+.diffs .d1 { color: #7cff9b; }
+.diffs .d2 { color: var(--front); }
+.diffs .d3 { color: var(--accent); }
+.diffs .d4 { color: var(--danger); }
+.credits { margin-top: 24px; }
+.credits .small { color: var(--muted); font-size: 15px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* ---------- Cómo se juega: cadena de montaje ilustrada ---------- */
+.howto-intro { font-size: 18px; }
+.howto {
+  list-style: none;
+  margin: 16px 0 8px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  /* la tira de pasos se sale un poco del texto para que las ilustraciones luzcan */
+  width: min(1120px, calc(100vw - 40px));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.howto-step {
+  position: relative;
+  margin: 0;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #1c1340 0%, var(--panel) 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.howto-step img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 4px 0 6px;
+}
+.howto-step p { margin: 0; font-size: 16px; line-height: 1.45; }
+.howto-n {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffb36b, #ff4f6d);
+  border: 3px solid var(--bg);
+  color: #fff;
+  font-weight: bold;
+  font-size: 18px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+/* flechas entre pasos (escritorio) */
+.howto-step:not(:nth-child(3n))::after {
+  content: "";
+  position: absolute;
+  right: -13px;
+  top: 42%;
+  border: 9px solid transparent;
+  border-left: 11px solid var(--accent);
+  z-index: 1;
+}
+.howto .hot { color: var(--danger); }
+.howto .ok { color: var(--back); font-weight: bold; }
+
+.prbox {
+  margin: 28px 0 20px;
+  padding: 18px 18px 8px;
+  border: 2px solid #7b52e0;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at top left, rgba(138, 92, 240, 0.28), transparent 60%), var(--panel);
+}
+.prbox h3 { margin-top: 0; font-size: 23px; color: #cdb8ff; }
+.prbox h4 { margin: 18px 0 8px; color: var(--muted); font-size: 16px; text-transform: uppercase; letter-spacing: 0.06em; }
+.recipes { display: grid; gap: 12px; }
+.recipe {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+}
+.recipe img { display: block; height: auto; max-width: 62%; flex: 0 1 auto; }
+.recipe.lanes1 img { width: 456px; }
+.recipe.lanes2 img { width: 508px; }
+.recipe.lanes3 img { width: 560px; }
+.recipe figcaption { font-size: 17px; line-height: 1.5; }
+.recipe figcaption strong { display: block; font-size: 20px; }
+.recipe .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 4px; }
+.chip { padding: 1px 10px; border-radius: 999px; font-size: 13px; font-weight: bold; color: #10091f; }
+.chip.f { background: var(--front); }
+.chip.b { background: var(--back); }
+.chip.d { background: var(--data); }
+.tf { color: var(--front); }
+.tb { color: var(--back); }
+.td { color: var(--data); }
+.recipes-more { grid-template-columns: repeat(2, 1fr); }
+.recipe.small { flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px 10px; }
+.recipe.small img { max-width: 100%; width: 330px; }
+.recipe.small figcaption { font-size: 15px; }
+.recipe.small figcaption strong { display: inline; font-size: 16px; }
+.howto-extra { padding-left: 1.2em; }
+.howto-extra li { margin-bottom: 6px; }
+
+@media (max-width: 760px) {
+  .howto { grid-template-columns: 1fr 1fr; }
+  .howto-step::after { display: none; }
+  .recipe { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .recipe img { max-width: 100%; }
+}
+@media (max-width: 480px) {
+  .howto { grid-template-columns: 1fr; gap: 18px; }
+  .recipes-more { grid-template-columns: 1fr; }
 }

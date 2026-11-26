@@ -31,6 +31,8 @@
     setKey: setKey,
     attach: function (canvas) {
       window.addEventListener('keydown', function (e) {
+        // Con el juego fuera de la vista (leyendo "Acerca del juego") las teclas vuelven a ser de la página.
+        if ((window.scrollY || window.pageYOffset || 0) > window.innerHeight * 0.5) return;
         if (PREVENT[e.code]) e.preventDefault();
         if (e.repeat) return;
         setKey(e.code, true);

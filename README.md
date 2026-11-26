@@ -16,6 +16,23 @@ El audio se activa al pulsar la primera tecla.
 - **1 jugador**: manejas a dos devs y alternas entre ellos con `Tab` (o `Y` en el mando).
 - **2 jugadores**: co-op local en el mismo teclado o con mandos.
 
+## Jugar online
+
+**https://ivan-pico.github.io/overworking/**
+
+### Despliegue en GitHub Pages
+
+El juego es estático, así que se publica tal cual:
+
+1. En GitHub: *Settings → Pages → Build and deployment → Source: Deploy from a branch*, rama `main`, carpeta `/ (root)`.
+2. A los pocos minutos queda en `https://ivan-pico.github.io/overworking/`.
+3. (Opcional) Da de alta la URL en Google Search Console y envía `sitemap.xml`.
+
+La página incluye metadatos SEO, Open Graph/Twitter (`img/og-image.png`), datos estructurados
+`VideoGame` (JSON-LD), `manifest.webmanifest` (instalable como PWA), `robots.txt` y `sitemap.xml`.
+Si cambia la URL pública, actualízala en `index.html` (canonical, `og:*`, JSON-LD), `sitemap.xml` y `robots.txt`.
+Bajo la pantalla de juego hay una sección "Acerca del juego" en HTML: al bajar a leerla la partida se pausa.
+
 ## Controles
 
 | Acción | Jugador 1 | Jugador 2 | Mando |
@@ -69,7 +86,9 @@ nivel. El progreso se guarda en `localStorage`.
 ## Estructura
 
 ```
-index.html              punto de entrada (scripts clásicos, sin módulos: funciona con file://)
+index.html              punto de entrada (scripts clásicos con defer, sin módulos: funciona con file://) + SEO
+js/page.js              integración con la sección "Acerca del juego" (pausa al hacer scroll)
+manifest.webmanifest    PWA · robots.txt, sitemap.xml · img/og-image.png (imagen social 1200×630) · icons/
 css/style.css           letterbox del lienzo 1280×720
 js/audio.js             OW.Audio: música chiptune y SFX sintetizados con WebAudio
 js/art/                 OW.Art / OW.FX: todo el dibujo procedural
