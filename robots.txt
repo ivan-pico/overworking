@@ -1,8 +1,6 @@
-# OVERWORKING — https://ivan-pico.github.io/overworking/
-# Nota: en GitHub Pages de proyecto los buscadores solo leen el robots.txt de la raíz del dominio;
-# este fichero aplica si el juego se sirve en la raíz de un dominio propio.
+# OVERWORKING — https://overworking.gohan.cat/
 User-agent: *
 Allow: /
 Disallow: /tools/
 
-Sitemap: https://ivan-pico.github.io/overworking/sitemap.xml
+Sitemap: https://overworking.gohan.cat/sitemap.xml

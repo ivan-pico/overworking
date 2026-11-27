@@ -18,14 +18,14 @@ El audio se activa al pulsar la primera tecla.
 
 ## Jugar online
 
-**https://ivan-pico.github.io/overworking/**
+**https://overworking.gohan.cat/**
 
 ### Despliegue en GitHub Pages
 
 El juego es estático, así que se publica tal cual:
 
 1. En GitHub: *Settings → Pages → Build and deployment → Source: Deploy from a branch*, rama `main`, carpeta `/ (root)`.
-2. A los pocos minutos queda en `https://ivan-pico.github.io/overworking/`.
+2. En *Custom domain* pon `overworking.gohan.cat` (el fichero `CNAME` ya lo indica) y, en el DNS de gohan.cat, crea `CNAME overworking ivan-pico.github.io`.
 3. (Opcional) Da de alta la URL en Google Search Console y envía `sitemap.xml`.
 
 La página incluye metadatos SEO, Open Graph/Twitter (`img/og-image.png`), datos estructurados
