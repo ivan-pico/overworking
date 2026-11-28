@@ -221,7 +221,8 @@
         ['y en todos los deploys de viernes.', false],
         ['', false],
         ['Ningún becario fue dañado durante el desarrollo.', false],
-        ['(Bueno, uno. Pero tenía café.)', false]
+        ['(Bueno, uno. Pero tenía café.)', false],
+        ['Hecho por Ivan Picó · ivanpico.com', true]
       ];
       for (var i = 0; i < lines.length; i++) U.text(ctx, lines[i][0], 340, 180 + i * 38, { size: 20, align: 'left', color: lines[i][1] ? '#7cff9b' : '#e6e0ff', font: C.MONO, weight: 'normal' });
       footer(ctx, 'Pulsa cualquier botón para volver');
